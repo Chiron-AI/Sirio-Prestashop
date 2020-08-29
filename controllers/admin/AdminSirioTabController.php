@@ -2,18 +2,18 @@
 /**
  * NOTICE OF LICENSE
  *
- * @author    INVERTUS, UAB www.invertus.eu <support@invertus.eu>
- * @copyright Copyright (c) permanent, INVERTUS, UAB
- * @license   MIT
+ * @author    Chiron, www.chiron.ai <support@chiron.ai>
+ * @copyright Copyright (c) permanent, Chiron
+ * @license   Addons PrestaShop license limitation
  * @see       /LICENSE
  *
- *  International Registered Trademark & Property of INVERTUS, UAB
+ *  International Registered Trademark & Property of Chiron
  */
 
 /**
  * Class AdminSkeletonTabController - it is invisible tab used for other tab display inheritance
  */
-class AdminSkeletonTabController extends \Invertus\Skeleton\Controller\AdminController
+class AdminSirioTabController extends \Chiron\Sirio\Controller\AdminController
 {
 
 }

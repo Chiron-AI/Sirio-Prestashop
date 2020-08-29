@@ -2,15 +2,15 @@
 /**
  * NOTICE OF LICENSE
  *
- * @author    INVERTUS, UAB www.invertus.eu <support@invertus.eu>
- * @copyright Copyright (c) permanent, INVERTUS, UAB
- * @license   MIT
+ * @author    Chiron, www.chiron.ai <support@chiron.ai>
+ * @copyright Copyright (c) permanent, Chiron
+ * @license   Addons PrestaShop license limitation
  * @see       /LICENSE
  *
- *  International Registered Trademark & Property of INVERTUS, UAB
+ *  International Registered Trademark & Property of Chiron
  */
 
-namespace Invertus\Skeleton\Install;
+namespace Chhiron\Sirio\Install;
 
 use Configuration;
 use Tools;
@@ -21,7 +21,7 @@ use Tools;
 class Uninstaller extends AbstractInstaller
 {
     /**
-     * @var \Skeleton
+     * @var \Sirio
      */
     private $module;
     /**
@@ -30,10 +30,10 @@ class Uninstaller extends AbstractInstaller
     private $configuration;
 
     /**
-     * @param \Skeleton $module
+     * @param \Sirio $module
      * @param array $configuration
      */
-    public function __construct(\Skeleton $module, array $configuration)
+    public function __construct(\Sirio $module, array $configuration)
     {
         $this->module = $module;
         $this->configuration = $configuration;

@@ -2,12 +2,12 @@
 /**
  * NOTICE OF LICENSE
  *
- * @author    INVERTUS, UAB www.invertus.eu <support@invertus.eu>
- * @copyright Copyright (c) permanent, INVERTUS, UAB
- * @license   MIT
+ * @author    Chiron, www.chiron.ai <support@chiron.ai>
+ * @copyright Copyright (c) permanent, Chiron
+ * @license   Addons PrestaShop license limitation
  * @see       /LICENSE
  *
- *  International Registered Trademark & Property of INVERTUS, UAB
+ *  International Registered Trademark & Property of Chiron
  */
 
 use Invertus\Skeleton\Install\Installer;
@@ -34,15 +34,15 @@ class Skeleton extends Module
     public function __construct()
     {
         $this->tab = 'other_modules';
-        $this->name = 'skeleton';
-        $this->version = '1.0.0';
-        $this->author = 'Invertus';
+        $this->name = 'sirio';
+        $this->version = '0.0.1';
+        $this->author = 'Chiron';
 
         parent::__construct();
         $this->autoLoad();
         $this->compile();
-        $this->displayName = $this->l('Skeleton');
-        $this->description = $this->l('This is module description');
+        $this->displayName = $this->l('Sirio');
+        $this->description = $this->l('Chiron Sirio module');
     }
 
     public function getTabs()
@@ -66,7 +66,9 @@ class Skeleton extends Module
         /** @var Installer $installer */
         $installer = $this->getContainer()->get('installer');
 
-        return parent::install() && $installer->init();
+        return parent::install() &&
+        $this->registerHook('actionFrontControllerSetMedia') &&
+        $this->registerHook('header') && $installer->init();
     }
 
     public function uninstall()
@@ -130,5 +132,11 @@ class Skeleton extends Module
 
         require_once $containerCache;
         $this->moduleContainer = new $containerClass();
+    }
+
+    public function setMedia() {
+        parent::setMedia();
+        $this->context->controller->addJS('https://api.sirio.chiron.ai/api/v1/profiling');
+        //$this->registerJavascript('remote-sirio', 'https://api.sirio.chiron.ai/api/v1/profiling', ['server' => 'remote', 'position' => 'bottom', 'priority' => 20]);
     }
 }

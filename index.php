@@ -2,12 +2,12 @@
 /**
  * NOTICE OF LICENSE
  *
- * @author    INVERTUS, UAB www.invertus.eu <support@invertus.eu>
- * @copyright Copyright (c) permanent, INVERTUS, UAB
- * @license   MIT
+ * @author    Chiron, www.chiron.ai <support@chiron.ai>
+ * @copyright Copyright (c) permanent, Chiron
+ * @license   Addons PrestaShop license limitation
  * @see       /LICENSE
  *
- *  International Registered Trademark & Property of INVERTUS, UAB
+ *  International Registered Trademark & Property of Chiron
  */
 
 header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");

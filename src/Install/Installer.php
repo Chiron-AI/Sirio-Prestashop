@@ -2,7 +2,7 @@
 /**
  * NOTICE OF LICENSE
  *
- * @author    INVERTUS, UAB www.invertus.eu <support@invertus.eu>
+ * @author    Chiron, www.chiron.ai <support@chiron.ai>
  * @copyright Copyright (c) permanent, INVERTUS, UAB
  * @license   MIT
  * @see       /LICENSE
@@ -10,7 +10,7 @@
  *  International Registered Trademark & Property of INVERTUS, UAB
  */
 
-namespace Invertus\Skeleton\Install;
+namespace Chiron\Sirio\Install;
 
 use Configuration;
 use Db;
@@ -23,7 +23,7 @@ use Tools;
 class Installer extends AbstractInstaller
 {
     /**
-     * @var \Skeleton
+     * @var \Sirio
      */
     private $module;
     /**
@@ -32,10 +32,10 @@ class Installer extends AbstractInstaller
     private $configuration;
 
     /**
-     * @param \Skeleton $module
+     * @param \Sirio $module
      * @param array $configuration
      */
-    public function __construct(\Skeleton $module, array $configuration)
+    public function __construct(\Sirio $module, array $configuration)
     {
         $this->module = $module;
         $this->configuration = $configuration;

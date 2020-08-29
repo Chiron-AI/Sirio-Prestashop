@@ -1,24 +1,24 @@
 services:
-    skeleton.module:
-        class: 'Skeleton'
+    sirio.module:
+        class: 'Sirio'
         factory: ['Module', 'getInstanceByName']
         arguments:
-            - 'skeleton'
+            - 'sirio'
 
 #    Installers
     install.tab:
-        class: 'Invertus\Skeleton\Install\Tab'
+        class: 'Chiron\Sirio\Install\Tab'
         arguments:
             - '%module_settings%'
 
     installer:
-        class: 'Invertus\Skeleton\Install\Installer'
+        class: 'Chiron\Sirio\Install\Installer'
         arguments:
-            - '@skeleton.module'
+            - '@sirio.module'
             - '%module_settings%'
 
     uninstaller:
-        class: 'Invertus\Skeleton\Install\Uninstaller'
+        class: 'Chiron\Sirio\Install\Uninstaller'
         arguments:
-            - '@skeleton.module'
+            - '@sirio.module'
             - '%module_settings%'

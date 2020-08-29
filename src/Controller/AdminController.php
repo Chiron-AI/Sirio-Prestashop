@@ -2,15 +2,16 @@
 /**
  * NOTICE OF LICENSE
  *
- * @author    INVERTUS, UAB www.invertus.eu <support@invertus.eu>
- * @copyright Copyright (c) permanent, INVERTUS, UAB
- * @license   MIT
+ * @author    Chiron, www.chiron.ai <support@chiron.ai>
+ * @copyright Copyright (c) permanent, Chiron
+ * @license   Addons PrestaShop license limitation
  * @see       /LICENSE
  *
- *  International Registered Trademark & Property of INVERTUS, UAB
+ *  International Registered Trademark & Property of Chiron
  */
 
-namespace Invertus\Skeleton\Controller;
+
+namespace Chiron\Sirio\Controller;
 
 /**
  * Class AdminController - an abstraction for all admin controllers
