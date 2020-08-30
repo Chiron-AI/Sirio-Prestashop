@@ -10,133 +10,67 @@
  *  International Registered Trademark & Property of Chiron
  */
 
-use Invertus\Skeleton\Install\Installer;
-use Invertus\Skeleton\Install\Uninstaller;
-use Symfony\Component\Config\ConfigCache;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
-use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
-use Symfony\Component\Config\FileLocator;
-use \Invertus\Skeleton\Install\Tab;
-
-class Skeleton extends Module
+class Sirio extends Module
 {
     /**
-     * If false, then SkeletonContainer is in immutable state
+     * If false, then SirioContainer is in immutable state
      */
     const DISABLE_CACHE = true;
 
     /**
-     * @var SkeletonContainer
+     * @var SirioContainer
      */
     private $moduleContainer;
 
     public function __construct()
     {
-        $this->tab = 'other_modules';
         $this->name = 'sirio';
+        $this->tab = 'analytics_stats';
         $this->version = '0.0.1';
         $this->author = 'Chiron';
 
         parent::__construct();
-        $this->autoLoad();
-        $this->compile();
         $this->displayName = $this->l('Sirio');
-        $this->description = $this->l('Chiron Sirio module');
+        $this->description = $this->l('Sirio è un sistema di monitoraggio avanzato ideale per E-Commerce.');
+        $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
+        $this->module_key = '1d1be07cf291473029caea0c12939961';
     }
 
-    public function getTabs()
-    {
-        /** @var Tab $tab */
-        $tab = $this->getContainer()->get('install.tab');
-        return $tab->getTabs();
-    }
-
-    public function getContent()
-    {
-        /** @var Tab $tab */
-        $tab = $this->getContainer()->get('install.tab');
-
-        $redirectLink = $this->context->link->getAdminLink($tab->getControllerInfo());
-        Tools::redirectAdmin($redirectLink);
-    }
 
     public function install()
     {
-        /** @var Installer $installer */
-        $installer = $this->getContainer()->get('installer');
-
         return parent::install() &&
         $this->registerHook('actionFrontControllerSetMedia') &&
-        $this->registerHook('header') && $installer->init();
+        $this->registerHook('header');
     }
 
     public function uninstall()
     {
-        /** @var Uninstaller $unInstaller */
-        $unInstaller = $this->getContainer()->get('uninstaller');
-
-        return parent::uninstall() && $unInstaller->init();
+        return parent::uninstall();
     }
 
-    public function hookActionDispatcherBefore()
-    {
-        $this->autoLoad();
-    }
 
     /**
      * Gets container with loaded classes defined in src folder
      *
-     * @return SkeletonContainer
+     * @return SirioContainer
      */
     public function getContainer()
     {
         return $this->moduleContainer;
     }
 
-    /**
-     * Autoload's project files from /src directory
-     */
-    private function autoLoad()
+    public function hookActionFrontControllerSetMedia()
     {
-        $autoLoadPath = $this->getLocalPath().'vendor/autoload.php';
-
-        require_once $autoLoadPath;
+        $this->context->controller->registerJavascript('remote-sirio', 'https://api.sirio.chiron.ai/api/v1/profiling', ['server' => 'remote', 'position' => 'bottom', 'priority' => 20]);
     }
 
-    /**
-     * Creates compiled dependency injection container which holds data configured in config/config.yml file.
-     *
-     * @throws Exception
-     */
-    private function compile()
+    public function getContent()
     {
-        $containerCache = $this->getLocalPath().'var/cache/container.php';
-        $containerConfigCache = new ConfigCache($containerCache, self::DISABLE_CACHE);
-
-        $containerClass = get_class($this).'Container';
-
-        if (!$containerConfigCache->isFresh()) {
-            $containerBuilder = new ContainerBuilder();
-            $locator = new FileLocator($this->getLocalPath().'/config');
-            $loader  = new YamlFileLoader($containerBuilder, $locator);
-            $loader->load('config.yml');
-            $containerBuilder->compile();
-            $dumper = new PhpDumper($containerBuilder);
-
-            $containerConfigCache->write(
-                $dumper->dump(['class' => $containerClass]),
-                $containerBuilder->getResources()
-            );
+        /* Empty the Shop domain cache */
+        if (method_exists('ShopUrl', 'resetMainDomainCache')) {
+            ShopUrl::resetMainDomainCache();
         }
-
-        require_once $containerCache;
-        $this->moduleContainer = new $containerClass();
-    }
-
-    public function setMedia() {
-        parent::setMedia();
-        $this->context->controller->addJS('https://api.sirio.chiron.ai/api/v1/profiling');
-        //$this->registerJavascript('remote-sirio', 'https://api.sirio.chiron.ai/api/v1/profiling', ['server' => 'remote', 'position' => 'bottom', 'priority' => 20]);
+        return $this->display(__FILE__, 'views/templates/admin/configuration.tpl');
     }
 }

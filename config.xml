@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+    <name>sirio</name>
+    <displayName><![CDATA[Sirio]]></displayName>
+    <version><![CDATA[0.0.1]]></version>
+    <description><![CDATA[Sirio è un sistema di monitoraggio avanzato ideale per E-Commerce.]]></description>
+    <author><![CDATA[Chiron]]></author>
+    <tab><![CDATA[analytics_stats]]></tab>
+    <confirmUninstall><![CDATA[Are you sure you want to delete these details?]]></confirmUninstall>
+    <is_configurable>1</is_configurable>
+    <need_instance>1</need_instance>
+    <limited_countries></limited_countries>
+</module>
