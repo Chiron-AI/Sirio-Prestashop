@@ -3,7 +3,7 @@
     <name>sirio</name>
     <displayName><![CDATA[Sirio]]></displayName>
     <version><![CDATA[0.0.1]]></version>
-    <description><![CDATA[Sirio è un sistema di monitoraggio avanzato ideale per E-Commerce.]]></description>
+    <description><![CDATA[Sirio is an advanced monitoring system ideal for E-Commerce.]]></description>
     <author><![CDATA[Chiron]]></author>
     <tab><![CDATA[analytics_stats]]></tab>
     <confirmUninstall><![CDATA[Are you sure you want to delete these details?]]></confirmUninstall>

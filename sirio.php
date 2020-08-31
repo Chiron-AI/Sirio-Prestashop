@@ -31,7 +31,7 @@ class Sirio extends Module
 
         parent::__construct();
         $this->displayName = $this->l('Sirio');
-        $this->description = $this->l('Sirio è un sistema di monitoraggio avanzato ideale per E-Commerce.');
+        $this->description = $this->l('Sirio is an advanced monitoring system ideal for E-Commerce.');
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
         $this->module_key = '1d1be07cf291473029caea0c12939961';
     }
