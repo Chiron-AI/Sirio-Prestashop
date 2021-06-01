@@ -21,12 +21,14 @@ class Sirio extends Module
      * @var SirioContainer
      */
     private $moduleContainer;
+    
+    private $script;
 
     public function __construct()
     {
         $this->name = 'sirio';
         $this->tab = 'analytics_stats';
-        $this->version = '0.0.1';
+        $this->version = '0.1.0';
         $this->author = 'Chiron';
 
         parent::__construct();
@@ -59,11 +61,59 @@ class Sirio extends Module
     {
         return $this->moduleContainer;
     }
+    
+    protected function getHeaders(){
+		$header_request = getallheaders();
+		$header_response = headers_list();
+		$header_response_status_code = http_response_code();
+	
+	
+		$header_response_filtered = array();
+	
+	
+	
+		foreach ($header_response as $response) {
+			$explode_pos = strpos($response,':');
+			$key = substr($response, 0, $explode_pos);
+			if($key !== 'Link'){
+				$value = substr($response, $explode_pos);
+				$header_response_filtered[] = array($key, $value);
+			}
+		}
+	
+		$headers = array(
+			'request'=>array(
+				'Accept-Encoding'=>$header_request['Accept-Encoding'],
+				'Accept-Language'=>$header_request['Accept-Language'],
+				'Cookie'=>$header_request['Cookie']
+			),
+			'response'=>array(
+				$header_response_filtered,
+				'status_code'=>$header_response_status_code
+			)
+		);
+	
+		$script = '
+	 		 		var sirioCustomObject = {};
+	 				sirioCustomObject.headers = '.json_encode($headers).';
+	 		 ';
+	
+		return $script;
+	}
+	
+	protected function getImage($object, $id_image)
+	{
+		$retriever = new ImageRetriever(
+			$this->context->link
+		);
+		
+		return $retriever->getImage($object, $id_image);
+	}
 
     public function hookActionFrontControllerSetMedia()
     {
         $this->context->controller->registerJavascript('remote-sirio', 'https://api.sirio.chiron.ai/api/v1/profiling', ['server' => 'remote', 'position' => 'bottom', 'priority' => 20]);
-		
+		$this->script = $this->getHeaders();
 		
 		if($this->context->controller->php_self == 'index' ) {
 			return $this->appendHomeJS();
@@ -93,7 +143,7 @@ class Sirio extends Module
 		return
 			'<script type="text/javascript">
                      //<![CDATA[
-                     var sirioCustomObject = {};
+                     '.$this->script.'
                      sirioCustomObject.pageType = "home";
                      sirioCustomObject.locale = "'.$locale.'";
                      sirioCustomObject.currency = "'.$currency_code.'";
@@ -111,7 +161,7 @@ class Sirio extends Module
 		return
 			'<script type="text/javascript">
                      //<![CDATA[
-                     var sirioCustomObject = {};
+                     '.$this->script.'
                      sirioCustomObject.productDetails = {"sku:"'.$current_product->getSku().'"name":"'.$current_product->getName().'","image":"'.$current_product->getImageUrl().'","description":"'.$current_product->getDescription().'","price":"'.$current_product->getPrice().'","special_price":"'.$current_product->getSpecialPrice().'"};
                      sirioCustomObject.pageType = "product";
                      sirioCustomObject.locale = "'.$locale.'";
@@ -124,11 +174,19 @@ class Sirio extends Module
 	private function appendProductCategoryJS() {
 		global $cookie;
 		$locale = Language::getgetIsoById( (int)$cookie->id_lang );
-		/*$limit = $this->getLimit();
-		$page = Mage::app()->getRequest()->getParam('p')?Mage::app()->getRequest()->getParam('p'):1;
-		$current_category = Mage::registry('current_category');
+		$id_category = (int) Tools::getValue('id_category');
+		$page = (int) Tools::getValue('page');
+		$current_category = new Category(
+			$id_category,
+			(int)$cookie->id_lang
+		);
+		
+		$max_product_count = $current_category->getProducts(1, 1, 10000, null, null, true);
+		$limit = (int) Tools::getValue('resultsPerPage');
+		if ($limit <= 0) {
+			$limit = Configuration::get('PS_PRODUCTS_PER_PAGE');
+		}
 		$products_count = $limit;
-		$max_product_count = $current_category->getProductCount();*/
 		$currency = new CurrencyCore($cookie->id_currency);
 		$currency_code = $currency->iso_code;
 		
@@ -142,11 +200,12 @@ class Sirio extends Module
 			$products_count = $max_product_count % $limit;
 		}
 		
+		
 		return
 			'<script type="text/javascript">
                      //<![CDATA[
-                     var sirioCustomObject = {};
-                     sirioCustomObject.categoryDetails = {"name":"'.$current_category->getName().'","image":"'.$current_category->getImageUrl().'","description":"'.$current_category->getDescription().'"};
+                     '.$this->script.'
+                     sirioCustomObject.categoryDetails = {"name":"'.$current_category->name.'","image":"'.$this->getImage($current_category,$current_category->id_image).'","description":"'.$current_category->description.'"};
                      sirioCustomObject.pageType = "category";
                      sirioCustomObject.numProducts = '.$products_count.';
                      sirioCustomObject.pages = '.$pages.';
@@ -160,13 +219,22 @@ class Sirio extends Module
 	private function appendProductSearchJS() {
 		global $cookie;
 		$locale = Language::getgetIsoById( (int)$cookie->id_lang );
-		/*$limit = $this->getLimit();
-		$page = Mage::app()->getRequest()->getParam('p')?Mage::app()->getRequest()->getParam('p'):1;
-		$current_category = Mage::registry('current_category');
+		$page = (int) Tools::getValue('page');
+		$limit = (int) Tools::getValue('resultsPerPage');
+		if ($limit <= 0) {
+			$limit = Configuration::get('PS_PRODUCTS_PER_PAGE');
+		}
 		$products_count = $limit;
-		$max_product_count = Mage::app()->getLayout()->getBlock('search.result')->getResultCount();*/
+		
 		$currency = new CurrencyCore($cookie->id_currency);
 		$currency_code = $currency->iso_code;
+		$query = new ProductSearchQuery();
+		$search_string = Tools::getValue('search_query');
+		$search_tag = Tools::getValue('tag');
+		$query->setSortOrder(new SortOrder('product', 'position', 'desc'))
+			->setSearchString($search_string)
+			->setSearchTag($search_tag);
+		$max_product_count = $query->count();
 		if($max_product_count % $limit > 0){
 			$pages = (int)($max_product_count / $limit) + 1 ;
 		}
@@ -179,7 +247,7 @@ class Sirio extends Module
 		return
 			'<script type="text/javascript">
                      //<![CDATA[
-                     var sirioCustomObject = {};
+                     '.$this->script.'
                      sirioCustomObject.pageType = "search";
                      sirioCustomObject.numProducts = '.$products_count.';
                      sirioCustomObject.pages = '.$pages.';
@@ -190,24 +258,6 @@ class Sirio extends Module
                  </script>';
 	}
 	
-	
-	private function appendCartJS() {
-		global $cookie;
-		$locale = Language::getgetIsoById( (int)$cookie->id_lang );
-		$currency = new CurrencyCore($cookie->id_currency);
-		$currency_code = $currency->iso_code;
-		return
-			'<script type="text/javascript">
-                     //<![CDATA[
-                     //var sirioCustomObject = {};
-                     sirioCustomObject.locale = "'.$locale.'";
-                     sirioCustomObject.currency = "'.$currency_code.'";
-                     //]]>
-                 </script>';
-	}
-	
-	
-	
 	private function appendCheckoutJS() {
 		global $cookie;
 		$iso_code = Language::getgetIsoById( (int)$cookie->id_lang );
@@ -216,7 +266,7 @@ class Sirio extends Module
 		return
 			'<script type="text/javascript">
                      //<![CDATA[
-                     var sirioCustomObject = {};
+                     '.$this->script.'
                      sirioCustomObject.pageType = "checkout";
                      sirioCustomObject.locale = "'.$iso_code.'";
                      sirioCustomObject.currency = "'.$currency_code.'";
@@ -237,41 +287,52 @@ class Sirio extends Module
 		return
 			'<script type="text/javascript">
                      //<![CDATA[
-                     var sirioCustomObject = {};
+                     '.$this->script.'
                      sirioCustomObject.pageType = "checkout_success";
                      sirioCustomObject.locale = "'.$locale.'";
                      sirioCustomObject.currency = "'.$currency_code.'";
                      //]]>
                  </script>';
-		
-		
-		
 	}
 	
-	public function cartTrack($observer) {
-		/*$quote = Mage::getSingleton('checkout/session')->getQuote();
-		$coupon = $quote->getCouponCode();
-		$cart = $quote->getAllVisibleItems();
-		$shipping = $quote->getShippingAddress()->getBaseShippingInclTax();
-		$subtotal = $quote->getBaseSubtotal();
-		$total = $quote->getBaseGrandTotal();
-		$discount = $subtotal - $quote->getBaseSubtotalWithDiscount();*/
+	public function hookActionCartSave() {
+		global $cookie;
+		$presenter = new CartPresenter();
+		$presented_cart = $presenter->present($this->context->cart, $shouldSeparateGifts = true);
+		$objCart = new Cart($this->context->cart, (int)$cookie->id_lang);
+		$total = $objCart->getOrderTotal(true, Cart::BOTH);
+		$shipping = $objCart->getPackageShippingCost();
+		$cart_rules = $this->context->cart->getCartRules();
+		//TODO debug
+		foreach ($cart_rules as $cart_rule_item) {
+			$couponObj = new CartRule($cart_rule_item['id_cart_rule']);
+			$coupon[] = $couponObj->code;
+		}
+		$coupon = implode(",", $coupon);
+		$total_discounts = $this->getOrderTotal(true, Cart::ONLY_DISCOUNTS);
+		//TODO debug
+		$discount = $total_discounts;
 		
 		/*
 				quando questa funzione viene chiamata:
 				metto in cart_new il carrello attuale
 		*/
+		$subtotal=0;
 		$products = array();
 		//echo json_encode($cart_product);
-		foreach($cart as $item){
-			
-			$products[] = array(
-				"sku"=>$item->getSku(),
-				"price"=>round($item->getBaseRowTotalInclTax()/$item->getQty(),2),
-				"qty"=>round($item->getQty()),
-				"name"=>$item->getName(),
-				"discount_amount"=>$item->getBaseDiscountAmount()
-			);
+		if (isset($presented_cart['products']) && !empty($presented_cart['products'])) {
+			foreach ($presented_cart['products'] as $item) {
+				
+				$product = array(
+					"sku" => $item->product_sku,
+					"price" => round($item->getBaseRowTotalInclTax() / $item->quantity, 2),
+					"qty" => round($item->quantity),
+					"name" => $item->product_name,
+					"discount_amount" => $item->getBaseDiscountAmount()
+				);
+				$products[]=$product;
+				$subtotal+=$product["price"];
+			}
 		}
 		$cart_full = '{"cart_total":'.$total.', "cart_subtotal":'.$subtotal.', "shipping":'.$shipping.', "coupon_code":'.$coupon.', "discount_amount":'.$discount.', "cart_products":'.json_encode($products).'}';
 		
@@ -281,7 +342,6 @@ class Sirio extends Module
 		setcookie('cart_new', base64_encode($cart_full), time() + (86400 * 30), "/");
 	}
 	
-
 
     public function getContent()
     {

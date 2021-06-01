@@ -2,7 +2,7 @@
 <module>
     <name>sirio</name>
     <displayName><![CDATA[Sirio]]></displayName>
-    <version><![CDATA[0.0.1]]></version>
+    <version><![CDATA[0.1.0]]></version>
     <description><![CDATA[Sirio is an advanced monitoring system ideal for E-Commerce.]]></description>
     <author><![CDATA[Chiron]]></author>
     <tab><![CDATA[analytics_stats]]></tab>
