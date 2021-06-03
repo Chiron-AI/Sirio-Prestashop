@@ -117,7 +117,7 @@ class Sirio extends Module
 
     public function hookActionFrontControllerSetMedia()
     {
-        $this->context->controller->registerJavascript('remote-sirio', 'https://api.sirio.chiron.ai/api/v1/profiling', ['server' => 'remote', 'position' => 'top', 'priority' => 100]);
+        $this->context->controller->registerJavascript('remote-sirio', 'https://api.sirio.chiron.ai/api/v1/profiling', ['server' => 'remote', 'position' => 'top', 'priority' => 1]);
 	}
 	
 	/**
@@ -179,7 +179,7 @@ class Sirio extends Module
 		return '<script type="text/javascript">
                      //<![CDATA[
                      '.$this->script.'
-                     sirioCustomObject.productDetails = {"sku:"'.$current_product->reference.', "name":"'.array_pop($current_product->name).'","image":"'.$image_url.'","description":"'.array_pop($current_product->description).'","price":"'.Product::getPriceStatic((int) $current_product->id, true, null, 2, null, false, true).'","special_price":"'.Product::getPriceStatic((int) $current_product->id, true, null, 2, null, false, false).'"};
+                     sirioCustomObject.productDetails = {"sku:"'.$current_product->reference?$current_product->reference:$current_product->ean13.', "name":"'.array_pop($current_product->name).'","image":"'.$image_url.'","description":"'.addslashes(str_replace("\n","", str_replace("\r","", str_replace("\t","", array_pop($current_product->description))))).'","price":"'.Product::getPriceStatic((int) $current_product->id, true, null, 2, null, false, true).'","special_price":"'.Product::getPriceStatic((int) $current_product->id, true, null, 2, null, false, false).'"};
                      sirioCustomObject.pageType = "product";
                      sirioCustomObject.locale = "'.$locale.'";
                      sirioCustomObject.currency = "'.$currency_code.'";
@@ -220,7 +220,7 @@ class Sirio extends Module
 		return '<script type="text/javascript">
                      //<![CDATA[
                      '.$this->script.'
-                     sirioCustomObject.categoryDetails = {"name":"'.$current_category->name.'","image":"'.$this->getImage($current_category,$current_category->id_image)['medium']['url'].'","description":"'.$current_category->description.'"};
+                     sirioCustomObject.categoryDetails = {"name":"'.$current_category->name.'","image":"'.$this->getImage($current_category,$current_category->id_image)['medium']['url'].'","description":"'.addslashes(str_replace("\n","", str_replace("\r","", str_replace("\t","",$current_category->description)))).'"};
                      sirioCustomObject.pageType = "category";
                      sirioCustomObject.numProducts = '.$products_count.';
                      sirioCustomObject.pages = '.$pages.';
