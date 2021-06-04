@@ -24,7 +24,8 @@
  *}
 
 <div class="panel">
-   <iframe src="https://crm.chiron.ai/shop/product/sirio-trial-22" title="sirio" width="100%" height="800"></iframe>
+   <h1>Sirio</h1>
+   <!--<iframe src="https://crm.chiron.ai/shop/product/sirio-trial-22" title="sirio" width="100%" height="800"></iframe>-->
 </div>
 
 

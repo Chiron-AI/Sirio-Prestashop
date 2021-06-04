@@ -412,7 +412,6 @@ class Sirio extends Module
         if (method_exists('ShopUrl', 'resetMainDomainCache')) {
             ShopUrl::resetMainDomainCache();
         }
-        return;
-        //return $this->display(__FILE__, 'views/templates/admin/configuration.tpl');
+        return $this->display(__FILE__, 'views/templates/admin/configuration.tpl');
     }
 }
