@@ -16,6 +16,7 @@ use PrestaShop\PrestaShop\Core\Product\Search\ProductSearchQuery;
 use PrestaShop\PrestaShop\Core\Product\Search\SortOrder;
 use PrestaShop\PrestaShop\Core\Product\Search\ProductSearchContext;
 use PrestaShop\PrestaShop\Adapter\Search\SearchProductSearchProvider;
+use PrestaShop\Module\PrestashopCheckout\Presenter\Cart\CartPresenter;
 
 class Sirio extends Module
 {
@@ -50,7 +51,8 @@ class Sirio extends Module
     {
         return parent::install() &&
         $this->registerHook('actionFrontControllerSetMedia') &&
-        $this->registerHook('header');
+        $this->registerHook('displayHeader') &&
+		$this->registerHook('actionCartSave');
     }
 
     public function uninstall()
@@ -120,6 +122,53 @@ class Sirio extends Module
         $this->context->controller->registerJavascript('remote-sirio', 'https://api.sirio.chiron.ai/api/v1/profiling', ['server' => 'remote', 'position' => 'top', 'priority' => 1]);
 	}
 	
+	public function hookActionCartSave() {
+		global $cookie;
+		$presenter = new CartPresenter($this->context);
+		$presented_cart = $presenter->present($this->context->cart, $shouldSeparateGifts = true);
+		$objCart = new Cart($this->context->cart->id, (int)$cookie->id_lang);
+		$total = $objCart->getOrderTotal(true, Cart::BOTH);
+		$shipping = $objCart->getPackageShippingCost();
+		$cart_rules = $this->context->cart->getCartRules();
+		//TODO debug
+		$coupon=array();
+		foreach ($cart_rules as $cart_rule_item) {
+			$couponObj = new CartRule($cart_rule_item['id_cart_rule']);
+			$coupon[] = $couponObj->code;
+		}
+		$coupon = implode(",", $coupon);
+		$total_discounts = $objCart->getOrderTotal(true, Cart::ONLY_DISCOUNTS);
+		//TODO debug
+		$discount = $total_discounts;
+		
+		/*
+				quando questa funzione viene chiamata:
+				metto in cart_new il carrello attuale
+		*/
+		$subtotal=0;
+		$products = array();
+		//echo json_encode($cart_product);
+		//TODO debug
+		if (isset($presented_cart['products']) && !empty($presented_cart['products'])) {
+			foreach ($presented_cart['products'] as $item) {
+				$product = array(
+					"sku" => $item['reference']?$item['reference']:$item['ean13'],
+					"price" => Product::getPriceStatic((int) $item['id_product'], true, null, 2, null, false, true),
+					"qty" => round($item['quantity']),
+					"name" => $item['name'],
+					"discount_amount" => Product::getPriceStatic((int) $item['id_product'], true, null, 2, null, true, true)
+				);
+				$products[]=$product;
+				$subtotal+=$product["price"]*$product['qty'];
+			}
+		}
+		$cart_full = '{"cart_total":'.$total.', "cart_subtotal":'.$subtotal.', "shipping":'.$shipping.', "coupon_code":'.$coupon.', "discount_amount":'.$discount.', "cart_products":'.json_encode($products).'}';
+		if(isset($_COOKIE['cart_new'])){
+			setcookie('cart_new', "", 1);
+		}
+		setcookie('cart_new', base64_encode($cart_full), time() + (86400 * 30), "/");
+	}
+	
 	/**
 	 * @return string
 	 * @throws Exception
@@ -179,7 +228,7 @@ class Sirio extends Module
 		return '<script type="text/javascript">
                      //<![CDATA[
                      '.$this->script.'
-                     sirioCustomObject.productDetails = {"sku:"'.$current_product->reference?$current_product->reference:$current_product->ean13.', "name":"'.array_pop($current_product->name).'","image":"'.$image_url.'","description":"'.addslashes(str_replace("\n","", str_replace("\r","", str_replace("\t","", array_pop($current_product->description))))).'","price":"'.Product::getPriceStatic((int) $current_product->id, true, null, 2, null, false, true).'","special_price":"'.Product::getPriceStatic((int) $current_product->id, true, null, 2, null, false, false).'"};
+                     sirioCustomObject.productDetails = {"sku:"'.$current_product->reference?$current_product->reference:$current_product->ean13.', "name":"'.array_pop($current_product->name).'","image":"'.$image_url.'","description":"'.addslashes(str_replace("\n","", str_replace("\r","", str_replace("\t","", array_pop($current_product->description))))).'","price":"'.Product::getPriceStatic((int) $current_product->id, true, null, 2, null, false, false).'","special_price":"'.Product::getPriceStatic((int) $current_product->id, true, null, 2, null, false, true).'"};
                      sirioCustomObject.pageType = "product";
                      sirioCustomObject.locale = "'.$locale.'";
                      sirioCustomObject.currency = "'.$currency_code.'";
@@ -357,55 +406,7 @@ class Sirio extends Module
                  </script>';
 	}
 	
-	public function hookActionCartSave() {
-		global $cookie;
-		$presenter = new CartPresenter();
-		$presented_cart = $presenter->present($this->context->cart, $shouldSeparateGifts = true);
-		$objCart = new Cart($this->context->cart, (int)$cookie->id_lang);
-		$total = $objCart->getOrderTotal(true, Cart::BOTH);
-		$shipping = $objCart->getPackageShippingCost();
-		$cart_rules = $this->context->cart->getCartRules();
-		//TODO debug
-		foreach ($cart_rules as $cart_rule_item) {
-			$couponObj = new CartRule($cart_rule_item['id_cart_rule']);
-			$coupon[] = $couponObj->code;
-		}
-		$coupon = implode(",", $coupon);
-		$total_discounts = $this->getOrderTotal(true, Cart::ONLY_DISCOUNTS);
-		//TODO debug
-		$discount = $total_discounts;
-		
-		/*
-				quando questa funzione viene chiamata:
-				metto in cart_new il carrello attuale
-		*/
-		$subtotal=0;
-		$products = array();
-		//echo json_encode($cart_product);
-		if (isset($presented_cart['products']) && !empty($presented_cart['products'])) {
-			foreach ($presented_cart['products'] as $item) {
-				
-				$product = array(
-					"sku" => $item->product_sku,
-					"price" => round($item->getBaseRowTotalInclTax() / $item->quantity, 2),
-					"qty" => round($item->quantity),
-					"name" => $item->product_name,
-					"discount_amount" => $item->getBaseDiscountAmount()
-				);
-				$products[]=$product;
-				$subtotal+=$product["price"];
-			}
-		}
-		$cart_full = '{"cart_total":'.$total.', "cart_subtotal":'.$subtotal.', "shipping":'.$shipping.', "coupon_code":'.$coupon.', "discount_amount":'.$discount.', "cart_products":'.json_encode($products).'}';
-		
-		if(isset($_COOKIE['cart_new'])){
-			setcookie('cart_new', "", 1);
-		}
-		setcookie('cart_new', base64_encode($cart_full), time() + (86400 * 30), "/");
-	}
-	
-
-    public function getContent()
+	public function getContent()
     {
         /* Empty the Shop domain cache */
         if (method_exists('ShopUrl', 'resetMainDomainCache')) {
