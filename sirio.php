@@ -41,7 +41,7 @@ class Sirio extends Module
 
         parent::__construct();
         $this->displayName = $this->l('Sirio');
-        $this->description = $this->l('Sirio is an advanced monitoring system ideal for E-Commerce.');
+        $this->description = $this->l('Sirio is an advanced monitoring system ideal for E-Commerce, with plans that can be adapted according to the number of visitors to the site. Sirio receives a large amount of data in real-time and analyzes customers\' behavior within the website, tracing all the interactions to find any possible anomaly that it might encounter in the funnel.');
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
         $this->module_key = '1d1be07cf291473029caea0c12939961';
     }
@@ -50,15 +50,102 @@ class Sirio extends Module
     public function install()
     {
         return parent::install() &&
-        $this->registerHook('actionFrontControllerSetMedia') &&
-        $this->registerHook('displayHeader') &&
-		$this->registerHook('actionCartSave');
+			$this->setDefaultValues() &&
+        	$this->registerHook('actionFrontControllerSetMedia') &&
+        	$this->registerHook('displayHeader') &&
+			$this->registerHook('actionCartSave');
     }
 
     public function uninstall()
     {
-        return parent::uninstall();
+        return parent::uninstall() && $this->deleteConfigKeys();
     }
+	
+	/**
+	 * Set default values while installing the module
+	 */
+	public function setDefaultValues()
+	{
+		Configuration::updateValue('SIRIO_MODULE_ENABLE', 1);
+		return true;
+	}
+	
+	/**
+	 * Delete module config keys
+	 */
+	public function deleteConfigKeys()
+	{
+		$var = array(
+			'SIRIO_MODULE_ENABLE'
+		);
+		
+		foreach ($var as $key) {
+			if (!Configuration::deleteByName($key)) {
+				return false;
+			}
+		}
+		
+		return true;
+	}
+	
+	private static function updateParam($param)
+	{
+		if (\Validate::isString(\Tools::getValue($param))) {
+			Configuration::updateValue($param, \Tools::getValue($param));
+		}
+	}
+	
+	
+	public function getContent()
+	{
+		/* Empty the Shop domain cache */
+		if (method_exists('ShopUrl', 'resetMainDomainCache')) {
+			ShopUrl::resetMainDomainCache();
+		}
+		
+		$output = "";
+		if (\Tools::isSubmit('btnSubmit')) {
+			self::updateParam('SIRIO_MODULE_ENABLE');
+			$output .= $this->displayConfirmation($this->l('Settings updated'));
+		}
+	
+		return $output . $this->displayForm();
+	}
+	
+	public function displayForm()
+	{
+		if (\Validate::isString(\Tools::getValue(
+			'SIRIO_MODULE_ENABLE'
+		))) {
+			$this->smarty->assign(
+				'SIRIO_MODULE_ENABLE',
+				\Tools::getValue(
+					'SIRIO_MODULE_ENABLE',
+					Configuration::get('SIRIO_MODULE_ENABLE')
+				)
+			);
+			
+		} else {
+			$this->smarty->assign(
+				'SIRIO_MODULE_ENABLE',
+				Configuration::get('SIRIO_MODULE_ENABLE')
+			);
+		}
+		
+		$this->context->controller->addJS('https://cdnjs.cloudflare.com/ajax/libs/riot/2.6.1/riot.min.js');
+		$this->context->controller->addJS('https://cdnjs.cloudflare.com/ajax/libs/riot/2.6.1/riot+compiler.min.js');
+		
+		$this->smarty->assign('ps_version', _PS_VERSION_);
+		
+		$html = $this->display(__FILE__, 'views/templates/admin/configuration.tpl');
+		return $html .
+			$this->display(__FILE__, 'views/templates/admin/prestui-0.6.0/ps-alert.tpl') .
+			$this->display(__FILE__, 'views/templates/admin/prestui-0.6.0/ps-form.tpl') .
+			$this->display(__FILE__, 'views/templates/admin/prestui-0.6.0/ps-panel.tpl') .
+			$this->display(__FILE__, 'views/templates/admin/prestui-0.6.0/ps-table.tpl') .
+			$this->display(__FILE__, 'views/templates/admin/prestui-0.6.0/ps-tabs.tpl') .
+			$this->display(__FILE__, 'views/templates/admin/prestui-0.6.0/ps-tags.tpl');
+	}
 
 
     /**
@@ -119,10 +206,18 @@ class Sirio extends Module
 
     public function hookActionFrontControllerSetMedia()
     {
+		if(Configuration::get('SIRIO_MODULE_ENABLE')==0){
+			return;
+		}
+    	
         $this->context->controller->registerJavascript('remote-sirio', 'https://api.sirio.chiron.ai/api/v1/profiling', ['server' => 'remote', 'position' => 'top', 'priority' => 1]);
 	}
 	
 	public function hookActionCartSave() {
+		if(Configuration::get('SIRIO_MODULE_ENABLE')==0){
+			return;
+		}
+  
 		global $cookie;
 		$presenter = new CartPresenter($this->context);
 		$presented_cart = $presenter->present($this->context->cart, $shouldSeparateGifts = true);
@@ -147,8 +242,6 @@ class Sirio extends Module
 		*/
 		$subtotal=0;
 		$products = array();
-		//echo json_encode($cart_product);
-		//TODO debug
 		if (isset($presented_cart['products']) && !empty($presented_cart['products'])) {
 			foreach ($presented_cart['products'] as $item) {
 				$product = array(
@@ -175,6 +268,10 @@ class Sirio extends Module
 	 */
 	public function hookDisplayHeader()
 	{
+		if(Configuration::get('SIRIO_MODULE_ENABLE')==0){
+			return;
+		}
+		
 		$this->script = $this->getHeaders();
 		
 		if($this->context->controller->php_self == 'index' ) {
@@ -406,12 +503,5 @@ class Sirio extends Module
                  </script>';
 	}
 	
-	public function getContent()
-    {
-        /* Empty the Shop domain cache */
-        if (method_exists('ShopUrl', 'resetMainDomainCache')) {
-            ShopUrl::resetMainDomainCache();
-        }
-        return $this->display(__FILE__, 'views/templates/admin/configuration.tpl');
-    }
+
 }

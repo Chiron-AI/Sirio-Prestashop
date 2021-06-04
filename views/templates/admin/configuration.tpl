@@ -23,9 +23,29 @@
  * International Registered Trademark & Property of PrestaShop SA
  *}
 
+{**
+* Copyright (c) 2019 Nexi Payments S.p.A.
+*
+* @author      iPlusService S.r.l.
+* @copyright   Copyright (c) 2019 Nexi Payments S.p.A. (https://ecommerce.nexi.it)
+* @license     GNU General Public License v3.0
+* @category    Payment Module
+* @package     Nexi XPay
+* @version     5.0.0
+*}
 <div class="panel">
-   <h1>Sirio</h1>
-   <!--<iframe src="https://crm.chiron.ai/shop/product/sirio-trial-22" title="sirio" width="100%" height="800"></iframe>-->
-</div>
+<form class="form-horizontal" method="post">
 
+   <ps-panel header="{l s='Settings Sirio' mod='sirio'}">
+      <div class="form-wrapper">
+         <ps-switch help="{l s='Enable Sirio Module' mod='sirio'}" name="SIRIO_MODULE_ENABLE" label="{l s='Enable' mod='sirio'}" yes="Yes" no="No"  active="{if $SIRIO_MODULE_ENABLE==1}true{else}false{/if}"></ps-switch>
+      </div>
+      <ps-panel-footer>
+
+         <ps-panel-footer-submit name="btnSubmit" icon="process-icon-save" title="{l s='Save' mod='sirio'}" direction="right"></<ps-panel-footer-submit>
+      </ps-panel-footer>
+   </ps-panel>
+
+</form>
+</div>
 
