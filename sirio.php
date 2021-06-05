@@ -255,7 +255,7 @@ class Sirio extends Module
 				$subtotal+=$product["price"]*$product['qty'];
 			}
 		}
-		$cart_full = '{"cart_total":'.$total.', "cart_subtotal":'.$subtotal.', "shipping":'.$shipping.', "coupon_code":'.$coupon.', "discount_amount":'.$discount.', "cart_products":'.json_encode($products).'}';
+		$cart_full = '{"cart_total":'.$total.', "cart_subtotal":'.$subtotal.', "shipping":'.$shipping.', "coupon_code":"'.$coupon.'", "discount_amount":'.$discount.', "cart_products":'.json_encode($products).'}';
 		if(isset($_COOKIE['cart_new'])){
 			setcookie('cart_new', "", 1);
 		}
