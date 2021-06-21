@@ -1,6 +1,6 @@
 # Sirio PrestaShop module
 
-Sirio PrestaShop module used for version >= 1.6.0
+Sirio PrestaShop module used for version >= 1.6.0.5
 
 ## Getting Started
 
