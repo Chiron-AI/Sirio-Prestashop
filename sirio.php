@@ -314,11 +314,13 @@ class Sirio extends Module
     }
     
     private function cleanText($string){
-    	return  addslashes(
-    			str_replace("'\n''","",
-				str_replace("'\r''","",
-				str_replace("'\t''","",
-				array_pop($string)))));
+    	return  preg_replace('/\R/', '',
+				str_replace("<br/>","",
+				addslashes(
+					str_replace("'\n''","",
+					str_replace("'\r''","",
+					str_replace("'\t''","",
+					trim(array_pop($string))))))));
 	}
 
     private function appendHomeJS() {
@@ -364,7 +366,7 @@ class Sirio extends Module
                      sirioCustomObject.currency = "'.$currency_code.'";
                      
                      sirioCustomObject.productDetails = {
-                        "sku:""'.$product_selected.'",
+                        "sku:": "'.$product_selected.'",
                         "name":"'.array_pop($current_product->name).'",
                         "image":"'.$image_url.'",
                         "description":"'.$this->cleanText($description).'",
