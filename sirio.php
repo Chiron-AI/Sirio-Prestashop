@@ -379,7 +379,12 @@ class Sirio extends Module
         global $cookie;
         $locale = Language::getIsoById( (int)$cookie->id_lang );
         $id_category = (int) Tools::getValue('id_category');
-        $page = Tools::getValue('page')?(int) Tools::getValue('page'):1;
+        if (_PS_VERSION_ < '1.7') {
+			$page = Tools::getValue('p') ? (int)Tools::getValue('p') : 1;
+		}
+		else{
+			$page = Tools::getValue('page') ? (int)Tools::getValue('page') : 1;
+		}
         $current_category = new Category(
             $id_category,
             (int)$cookie->id_lang
