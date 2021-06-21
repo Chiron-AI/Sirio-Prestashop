@@ -483,7 +483,7 @@ class Sirio extends Module
 		
 			$snippet = '<script type="text/javascript">
                      //<![CDATA[
-                     ' . $this->script . '
+                     [[SCRIPT]]
                      sirioCustomObject.pageType = "search";
                      sirioCustomObject.numProducts = ' . $products_count . ';
                      sirioCustomObject.locale = "' . $locale . '";
@@ -501,6 +501,8 @@ class Sirio extends Module
 		if(isset($_SESSION['snippet'])) {
 			$snippet = $_SESSION['snippet'];
 			unset($_SESSION['snippet']);
+			$snippet = str_replace("[[SCRIPT]]",$this->script, $snippet);
+			
 			return $snippet;
 		}
     }
