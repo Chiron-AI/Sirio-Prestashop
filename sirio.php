@@ -292,7 +292,7 @@ class Sirio extends Module
         }
 
         $this->script = $this->getHeaders();
-        print_r($this->context->controller->php_self);
+        
         if($this->context->controller->php_self == 'index' ) {
             return $this->appendHomeJS();
         }
@@ -312,6 +312,14 @@ class Sirio extends Module
             return $this->appendCheckoutSuccessJS();
         }
     }
+    
+    private function cleanText($string){
+    	return  addslashes(
+    			str_replace("'\n''","",
+				str_replace("'\r''","",
+				str_replace("'\t''","",
+				array_pop($string)))));
+	}
 
     private function appendHomeJS() {
         global $cookie;
@@ -347,6 +355,7 @@ class Sirio extends Module
         }elseif ($current_product->description_short != ''){
             $description = $current_product->description_short;
         }
+        
         return '<script type="text/javascript">
                      //<![CDATA[
                      '.$this->script.'
@@ -358,12 +367,13 @@ class Sirio extends Module
                         "sku:""'.$product_selected.'",
                         "name":"'.array_pop($current_product->name).'",
                         "image":"'.$image_url.'",
-                        "description":"'.addslashes(str_replace("'\n''","", str_replace("'\r''","", str_replace("'\t''","", array_pop($description))))).'",
+                        "description":"'.$this->cleanText($description).'",
                         "price":"'.Product::getPriceStatic((int) $current_product->id, true, null, 2, null, false, false).'",
                         "special_price":"'.Product::getPriceStatic((int) $current_product->id, true, null, 2, null, false, true).'"
                      //]]>
                  </script>';
     }
+    
     private function appendProductCategoryJS() {
         global $cookie;
         $locale = Language::getIsoById( (int)$cookie->id_lang );
@@ -375,7 +385,6 @@ class Sirio extends Module
         );
 
         $max_product_count = $current_category->getProducts(1, 1, 10000, null, null, true);
-        print_r($max_product_count);
         $limit = (int) Tools::getValue('resultsPerPage');
         if ($limit <= 0) {
             $limit = Configuration::get('PS_PRODUCTS_PER_PAGE');
@@ -397,7 +406,7 @@ class Sirio extends Module
         return '<script type="text/javascript">
                      //<![CDATA[
                      '.$this->script.'
-                     sirioCustomObject.categoryDetails = {"name":"'.$current_category->name.'","image":"'.$this->context->link->getCategoryLink($current_category).'","description":"'.addslashes(str_replace("\n","", str_replace("\r","", str_replace("\t","",$current_category->description)))).'"};
+                     sirioCustomObject.categoryDetails = {"name":"'.$current_category->name.'","image":"'.$this->context->link->getCategoryLink($current_category).'","description":"'.$this->cleanText($current_category->description).'"};
                      sirioCustomObject.pageType = "category";
                      sirioCustomObject.numProducts = '.$products_count.';
                      sirioCustomObject.pages = '.$pages.';
@@ -451,51 +460,30 @@ class Sirio extends Module
     private function appendProductSearchJS($params) {
         $products_count = $params['total'];
         $cookie = $params['cookie'];
-        $locale = Language::getIsoById((int)$cookie->id_lang); // prende due volte
+		$currency = new CurrencyCore($cookie->id_currency);
+		$currency_code = $currency->iso_code;
+		$locale = Language::getIsoById( (int)$cookie->id_lang );
         $page = Tools::getValue('page')?(int) Tools::getValue('page'):1;
         $limit = (int) Tools::getValue('resultsPerPage');
         if ($limit <= 0) {
             $limit = Configuration::get('PS_PRODUCTS_PER_PAGE');
         }
-        $products_count = $limit;
+		$pages=(int) ($products_count/$limit);
+        if($products_count % $limit > 0){
+			$pages+=1;
+		}
         return '<script type="text/javascript">
                      //<![CDATA[
                      '.$this->script.'
                      sirioCustomObject.pageType = "search";
                      sirioCustomObject.numProducts = '.$products_count.';                
-                     sirioCustomObject.locale = "'.$locale.'";                   
+                     sirioCustomObject.locale = "'.$locale.'";
+                     sirioCustomObject.pages = '.$pages.';
+					 sirioCustomObject.currentPage = '.$page.';
+					 sirioCustomObject.currency = "'.$currency_code.'"
                      //]]>
                  </script>';
-        //print_r($params);
 
-        /*print_r($params["expr"]["printed"]["total"]);
-        global $cookie;
-
-
-
-
-        $currency_code = $currency->iso_code;
-        $query = new ProductSearchQuery();
-        print_r($query);
-        $search_string = Tools::getValue('s');
-        $query->setSortOrder(new SortOrder('product', 'position', 'desc'))
-            ->setSearchString($search_string);
-        $provider = $this->getProductSearchProviderFromModules($query);
-
-        // if no module wants to do the query, then the core feature is used
-        if (null === $provider) {
-            $provider = $this->getDefaultProductSearchProvider();
-        }
-        // the search provider will need a context (language, shop...) to do its job
-        $context = $this->getProductSearchContext();
-        $result = $provider->runQuery(
-            $context,
-            $query
-        //sirioCustomObject.pages = '.$pages.';
-          sirioCustomObject.currentPage = '.$page.';
-        sirioCustomObject.currency = "'.$currency_code.'";
-        );
-*/
 
     }
 
