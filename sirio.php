@@ -56,7 +56,8 @@ class Sirio extends Module
                 $this->registerHook('actionFrontControllerSetMedia') &&
                 $this->registerHook('displayFooter') &&
                 $this->registerHook('actionCartSave') &&
-                $this->registerHook('actionSearch');
+                $this->registerHook('actionSearch') &&
+				$this->registerHook('actionProductListModifier');
 
         }
         else{
@@ -229,81 +230,32 @@ class Sirio extends Module
         }
     }
 
-    ## used for PS 1.7
+    ## used for PS 1.7 - CATEGORY / SEARCH
     public function hookActionProductSearchAfter($params) {
         if(Configuration::get('SIRIO_MODULE_ENABLE')==0){
             return;
         }
-        return $this->populateProductSearchJS($params);
+        return $this->populateProductListingJS($params);
     }
+	
+	## used for PS 1.6 - CATEGORY
+	public function hookActionProductListModifier($params) {
+    	if(Configuration::get('SIRIO_MODULE_ENABLE')==0){
+			return;
+		}
+		return $this->populateProductListingJS($params);
+		
+	}
 
-    ## used for PS 1.6
+    ## used for PS 1.6 - SEARCH
     public function hookActionSearch($params) {
         if(Configuration::get('SIRIO_MODULE_ENABLE')==0){
             return;
         }
-        return $this->populateProductSearchJS($params);
+        return $this->populateProductListingJS($params);
 
     }
 
-    public function hookActionCartSave() {
-        if(Configuration::get('SIRIO_MODULE_ENABLE')==0){
-            return;
-        }
-
-        global $cookie;
-        if (!$this->context->cart->id) {
-            if (Context::getContext()->cookie->id_guest) {
-                $guest = new Guest(Context::getContext()->cookie->id_guest);
-                $this->context->cart->mobile_theme = $guest->mobile_theme;
-            }
-            $this->context->cart->add();
-            if ($this->context->cart->id) {
-                $this->context->cookie->id_cart = (int)$this->context->cart->id;
-            }
-        }
-        print_r($this->context->cart);
-        /*$presenter = new CartPresenter($this->context);
-        $presented_cart = $presenter->present($this->context->cart, $shouldSeparateGifts = true);*/
-        $objCart = new Cart($this->context->cart->id, (int)$cookie->id_lang);
-        $total = $objCart->getOrderTotal(true, Cart::BOTH);
-        $shipping = $objCart->getPackageShippingCost();
-        $cart_rules = $this->context->cart->getCartRules();
-        //TODO debug
-        $coupon=array();
-        foreach ($cart_rules as $cart_rule_item) {
-            $couponObj = new CartRule($cart_rule_item['id_cart_rule']);
-            $coupon[] = $couponObj->code;
-        }
-        $coupon = implode(",", $coupon);
-        $total_discounts = $objCart->getOrderTotal(true, Cart::ONLY_DISCOUNTS);
-        //TODO debug
-        $discount = $total_discounts;
-        /*
-                quando questa funzione viene chiamata:
-                metto in cart_new il carrello attuale
-        */
-        $subtotal=0;
-        $products = array();
-        if (isset($presented_cart['products']) && !empty($presented_cart['products'])) {
-            foreach ($presented_cart['products'] as $item) {
-                $product = array(
-                    "sku" => $item['reference']?$item['reference']:$item['ean13'],
-                    "price" => Product::getPriceStatic((int) $item['id_product'], true, null, 2, null, false, true),
-                    "qty" => round($item['quantity']),
-                    "name" => $item['name'],
-                    "discount_amount" => Product::getPriceStatic((int) $item['id_product'], true, null, 2, null, true, true)
-                );
-                $products[]=$product;
-                $subtotal+=$product["price"]*$product['qty'];
-            }
-        }
-        $cart_full = '{"cart_total":'.$total.', "cart_subtotal":'.$subtotal.', "shipping":'.$shipping.', "coupon_code":"'.$coupon.'", "discount_amount":'.$discount.', "cart_products":'.json_encode($products).'}';
-        if(isset($_COOKIE['cart_new'])){
-            setcookie('cart_new', "", 1);
-        }
-        setcookie('cart_new', base64_encode($cart_full), time() + (86400 * 30), "/");
-    }
 
     /**
      * @return string
@@ -324,10 +276,10 @@ class Sirio extends Module
             return $this->appendProductJS();
         }
         else if($this->context->controller->php_self == 'category' ) {
-            return $this->appendProductCategoryJS();
+            return $this->appendProductListingJS();
         }
         else if ($this->context->controller->php_self == 'search') {
-            return $this->appendProductSearchJS();
+            return $this->appendProductListingJS();
         }
         else if ($this->context->controller->php_self == 'order') {
             return $this->appendCheckoutJS();
@@ -336,28 +288,66 @@ class Sirio extends Module
             return $this->appendCheckoutSuccessJS();
         }
     }
-
-    private function cleanTextProduct($string){
-        return  preg_replace('/\R/', '',
-            str_replace("<br/>","",
-                addslashes(
-                    str_replace("'\n''","",
-                        str_replace("'\r''","",
-                            str_replace("'\t''","",
-                                strip_tags(
-                                    trim(array_pop($string)))))))));
-    }
-    private function cleanTextCategory($string){
-        return  preg_replace('/\R/', '',
-            str_replace("<br/>","",
-                addslashes(
-                    str_replace("'\n''","",
-                        str_replace("'\r''","",
-                            str_replace("'\t''","",
-                                strip_tags(
-                                    trim(($string)))))))));
-    }
-
+	
+	public function hookActionCartSave() {
+		if(Configuration::get('SIRIO_MODULE_ENABLE')==0){
+			return;
+		}
+		
+		global $cookie;
+		if (!$this->context->cart->id) {
+			if (Context::getContext()->cookie->id_guest) {
+				$guest = new Guest(Context::getContext()->cookie->id_guest);
+				$this->context->cart->mobile_theme = $guest->mobile_theme;
+			}
+			$this->context->cart->add();
+			if ($this->context->cart->id) {
+				$this->context->cookie->id_cart = (int)$this->context->cart->id;
+			}
+		}
+		print_r($this->context->cart);
+		/*$presenter = new CartPresenter($this->context);
+		$presented_cart = $presenter->present($this->context->cart, $shouldSeparateGifts = true);*/
+		$objCart = new Cart($this->context->cart->id, (int)$cookie->id_lang);
+		$total = $objCart->getOrderTotal(true, Cart::BOTH);
+		$shipping = $objCart->getPackageShippingCost();
+		$cart_rules = $this->context->cart->getCartRules();
+		//TODO debug
+		$coupon=array();
+		foreach ($cart_rules as $cart_rule_item) {
+			$couponObj = new CartRule($cart_rule_item['id_cart_rule']);
+			$coupon[] = $couponObj->code;
+		}
+		$coupon = implode(",", $coupon);
+		$total_discounts = $objCart->getOrderTotal(true, Cart::ONLY_DISCOUNTS);
+		//TODO debug
+		$discount = $total_discounts;
+		/*
+				quando questa funzione viene chiamata:
+				metto in cart_new il carrello attuale
+		*/
+		$subtotal=0;
+		$products = array();
+		if (isset($presented_cart['products']) && !empty($presented_cart['products'])) {
+			foreach ($presented_cart['products'] as $item) {
+				$product = array(
+					"sku" => $item['reference']?$item['reference']:$item['ean13'],
+					"price" => Product::getPriceStatic((int) $item['id_product'], true, null, 2, null, false, true),
+					"qty" => round($item['quantity']),
+					"name" => $item['name'],
+					"discount_amount" => Product::getPriceStatic((int) $item['id_product'], true, null, 2, null, true, true)
+				);
+				$products[]=$product;
+				$subtotal+=$product["price"]*$product['qty'];
+			}
+		}
+		$cart_full = '{"cart_total":'.$total.', "cart_subtotal":'.$subtotal.', "shipping":'.$shipping.', "coupon_code":"'.$coupon.'", "discount_amount":'.$discount.', "cart_products":'.json_encode($products).'}';
+		if(isset($_COOKIE['cart_new'])){
+			setcookie('cart_new', "", 1);
+		}
+		setcookie('cart_new', base64_encode($cart_full), time() + (86400 * 30), "/");
+	}
+    
 
     private function appendHomeJS() {
         global $cookie;
@@ -408,7 +398,8 @@ class Sirio extends Module
                      //]]>
                  </script>';
     }
-
+	
+    # DEPRECATED
     private function appendProductCategoryJS() {
         global $cookie;
         $locale = Language::getIsoById( (int)$cookie->id_lang );
@@ -461,15 +452,22 @@ class Sirio extends Module
                  </script>';
     }
 
-  	private function populateProductSearchJS($params) {
+  	private function populateProductListingJS($params) {
+		global $cookie;
+    	if (_PS_VERSION_ < '1.7' && isset($params['nb_products'])) {
+    		$products_count = $params['nb_products'];
+		}
+		else{
+			$products_count = $params['total'];
+			$cookie = $params['cookie'];
+		}
+       
+    	
+       if($products_count) {
 
-       if($params['total']) {
-
-            $products_count = $params['total'];
-            $cookie = $params['cookie'];
             if (_PS_VERSION_ < '1.7') {
                 $page = Tools::getValue('page') ? (int)Tools::getValue('page') : 1;
-              }
+            }
             else{
                 $page = Tools::getValue('p') ? (int)Tools::getValue('p') : 1;
             }
@@ -491,14 +489,26 @@ class Sirio extends Module
             } else {
                 $products_count_page = $limit;
             }
-
-
+	
+		   if (isset($params["expr"])) {
+			   $page_type_script = 'sirioCustomObject.pageType = "search";
+                 sirioCustomObject.query = "' . $params["expr"] . '";';
+		   }
+		   else if(Tools::getValue('id_category')){
+			   $id_category = (int) Tools::getValue('id_category');
+			   $current_category = new Category(
+				   $id_category,
+				   (int)$cookie->id_lang
+			   );
+			   $page_type_script = 'sirioCustomObject.categoryDetails = {"name":"'.$current_category->name.'","image":"'.$this->context->link->getCategoryLink($current_category).'","description":"'.$this->cleanTextCategory($current_category->description).'"};
+                     sirioCustomObject.pageType = "category";';
+           }
+			
             $snippet = '<script type="text/javascript">
                  //<![CDATA[
                  [[SCRIPT]]
-                 sirioCustomObject.pageType = "search";
+                 '.$page_type_script.'
                  sirioCustomObject.numProducts = ' . $products_count_page . ';
-                 sirioCustomObject.query = "' . $params["expr"] . '";
                  sirioCustomObject.locale = "' . $locale . '";
                  sirioCustomObject.pages = ' . $pages . ';
                  sirioCustomObject.currentPage = ' . $page . ';
@@ -512,12 +522,13 @@ class Sirio extends Module
            else{
                $this->context->cookie->snippet = $snippet;
            }
+           
 
         }
 
 	}
 
-    private function appendProductSearchJS() {
+    private function appendProductListingJS() {
 
         if (_PS_VERSION_ < '1.7' && isset($_SESSION['snippet'])) {
             $snippet = $_SESSION['snippet'];
@@ -566,6 +577,27 @@ class Sirio extends Module
                      //]]>
                  </script>';
     }
-
+	
+	
+	private function cleanTextProduct($string){
+		return  preg_replace('/\R/', '',
+			str_replace("<br/>","",
+				addslashes(
+					str_replace("'\n''","",
+						str_replace("'\r''","",
+							str_replace("'\t''","",
+								strip_tags(
+									trim(array_pop($string)))))))));
+	}
+	private function cleanTextCategory($string){
+		return  preg_replace('/\R/', '',
+			str_replace("<br/>","",
+				addslashes(
+					str_replace("'\n''","",
+						str_replace("'\r''","",
+							str_replace("'\t''","",
+								strip_tags(
+									trim(($string)))))))));
+	}
 
 }
