@@ -1,12 +1,4 @@
 <?php
-if (!defined('_PS_VERSION_')) {
-    exit;
-}
-
-$autoloadPath = __DIR__ . '/vendor/autoload.php';
-if (file_exists($autoloadPath)) {
-    require_once $autoloadPath;
-}
 /**
  * NOTICE OF LICENSE
  *
@@ -17,15 +9,16 @@ if (file_exists($autoloadPath)) {
  *
  *  International Registered Trademark & Property of Chiron
  */
-/*
-use PrestaShop\PrestaShop\Adapter\Image\ImageRetriever;
-use PrestaShop\PrestaShop\Adapter\Product\PriceFormatter;
-use PrestaShop\PrestaShop\Core\Product\Search\ProductSearchQuery;
-use PrestaShop\PrestaShop\Core\Product\Search\SortOrder;
-use PrestaShop\PrestaShop\Core\Product\Search\ProductSearchContext;
-use PrestaShop\PrestaShop\Adapter\Search\SearchProductSearchProvider;
-use PrestaShop\Module\PrestashopCheckout\Presenter\Cart\CartPresenter;
-*/
+
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
+$autoloadPath = __DIR__ . '/vendor/autoload.php';
+if (file_exists($autoloadPath)) {
+    require_once $autoloadPath;
+}
+
 class Sirio extends Module
 {
     /**
@@ -302,7 +295,7 @@ class Sirio extends Module
         }
 
         $this->script = $this->getHeaders();
-        
+
         if($this->context->controller->php_self == 'index' ) {
             return $this->appendHomeJS();
         }
@@ -394,7 +387,7 @@ class Sirio extends Module
                      //]]>
                  </script>';
     }
-    
+
     private function appendProductCategoryJS() {
         global $cookie;
         $locale = Language::getIsoById( (int)$cookie->id_lang );
@@ -425,7 +418,7 @@ class Sirio extends Module
         else{
             $pages = $max_product_count / $limit ;
         }
-        
+
 		if($page == $pages && $products_count % $limit > 0){
 			$products_count_page = $products_count % $limit;
 		}
@@ -486,9 +479,9 @@ class Sirio extends Module
                     null
             );
     }
-	
+
 	private function populateProductSearchJS($params) {
-				
+
     	if($params['total']) {
 			$products_count = $params['total'];
 			$cookie = $params['cookie'];
@@ -515,8 +508,8 @@ class Sirio extends Module
 			else{
 				$products_count_page = $limit;
 			}
-			
-		
+
+
 			$snippet = '<script type="text/javascript">
                      //<![CDATA[
                      [[SCRIPT]]
@@ -539,7 +532,7 @@ class Sirio extends Module
 			$snippet = $_SESSION['snippet'];
 			unset($_SESSION['snippet']);
 			$snippet = str_replace("[[SCRIPT]]",$this->script, $snippet);
-			
+
 			return $snippet;
 		}
     }
