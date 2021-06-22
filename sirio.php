@@ -233,13 +233,24 @@ class Sirio extends Module
 
     }
     public function hookActionCartSave() {
+
         if(Configuration::get('SIRIO_MODULE_ENABLE')==0){
             return;
         }
-
         global $cookie;
-        $presenter = new CartPresenter($this->context);
-        $presented_cart = $presenter->present($this->context->cart, $shouldSeparateGifts = true);
+        if (!$this->context->cart->id) {
+            if (Context::getContext()->cookie->id_guest) {
+                $guest = new Guest(Context::getContext()->cookie->id_guest);
+                $this->context->cart->mobile_theme = $guest->mobile_theme;
+            }
+            $this->context->cart->add();
+            if ($this->context->cart->id) {
+                $this->context->cookie->id_cart = (int)$this->context->cart->id;
+            }
+        }
+        print_r($this->context->cart);
+        /*$presenter = new CartPresenter($this->context);
+        $presented_cart = $presenter->present($this->context->cart, $shouldSeparateGifts = true);*/
         $objCart = new Cart($this->context->cart->id, (int)$cookie->id_lang);
         $total = $objCart->getOrderTotal(true, Cart::BOTH);
         $shipping = $objCart->getPackageShippingCost();
@@ -254,8 +265,8 @@ class Sirio extends Module
         $total_discounts = $objCart->getOrderTotal(true, Cart::ONLY_DISCOUNTS);
         //TODO debug
         $discount = $total_discounts;
-
         /*
+
                 quando questa funzione viene chiamata:
                 metto in cart_new il carrello attuale
         */
@@ -279,6 +290,7 @@ class Sirio extends Module
             setcookie('cart_new', "", 1);
         }
         setcookie('cart_new', base64_encode($cart_full), time() + (86400 * 30), "/");
+
     }
 
     /**
@@ -312,16 +324,26 @@ class Sirio extends Module
             return $this->appendCheckoutSuccessJS();
         }
     }
-    
-    private function cleanText($string){
-    	return  preg_replace('/\R/', '',
-				str_replace("<br/>","",
-				addslashes(
-					str_replace("'\n''","",
-					str_replace("'\r''","",
-					str_replace("'\t''","",
-					trim(array_pop($string))))))));
-	}
+
+    private function cleanTextProduct($string){
+        return  preg_replace('/\R/', '',
+            str_replace("<br/>","",
+                addslashes(
+                    str_replace("'\n''","",
+                        str_replace("'\r''","",
+                            str_replace("'\t''","",
+                                trim(array_pop($string))))))));
+    }
+    private function cleanTextCategory($string){
+        return  preg_replace('/\R/', '',
+            str_replace("<br/>","",
+                addslashes(
+                    str_replace("'\n''","",
+                        str_replace("'\r''","",
+                            str_replace("'\t''","",
+                                trim(($string))))))));
+    }
+
 
     private function appendHomeJS() {
         global $cookie;
@@ -368,7 +390,7 @@ class Sirio extends Module
                         "sku:": "'.$product_selected.'",
                         "name":"'.array_pop($current_product->name).'",
                         "image":"'.$image_url.'",
-                        "description":"'.$this->cleanText($description).'",
+                        "description":"'.$this->cleanTextProduct($description).'",
                         "price":"'.Product::getPriceStatic((int) $current_product->id, true, null, 2, null, false, false).'",
                         "special_price":"'.Product::getPriceStatic((int) $current_product->id, true, null, 2, null, false, true).'"
                      //]]>
@@ -412,7 +434,7 @@ class Sirio extends Module
         return '<script type="text/javascript">
                      //<![CDATA[
                      '.$this->script.'
-                     sirioCustomObject.categoryDetails = {"name":"'.$current_category->name.'","image":"'.$this->context->link->getCategoryLink($current_category).'","description":"'.$this->cleanText($current_category->description).'"};
+                     sirioCustomObject.categoryDetails = {"name":"'.$current_category->name.'","image":"'.$this->context->link->getCategoryLink($current_category).'","description":"'.$this->cleanTextCategory($current_category->description).'"};
                      sirioCustomObject.pageType = "category";
                      sirioCustomObject.numProducts = '.$products_count.';
                      sirioCustomObject.pages = '.$pages.';
