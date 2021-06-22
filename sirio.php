@@ -405,16 +405,20 @@ class Sirio extends Module
         else{
             $pages = $max_product_count / $limit ;
         }
-        if($page == $pages){
-            $products_count = $max_product_count % $limit;
-        }
+        
+		if($page == $pages && $products_count % $limit > 0){
+			$products_count_page = $products_count % $limit;
+		}
+		else{
+			$products_count_page = $limit;
+		}
 
         return '<script type="text/javascript">
                      //<![CDATA[
                      '.$this->script.'
                      sirioCustomObject.categoryDetails = {"name":"'.$current_category->name.'","image":"'.$this->context->link->getCategoryLink($current_category).'","description":"'.$this->cleanText($current_category->description).'"};
                      sirioCustomObject.pageType = "category";
-                     sirioCustomObject.numProducts = '.$products_count.';
+                     sirioCustomObject.numProducts = '.$products_count_page.';
                      sirioCustomObject.pages = '.$pages.';
                      sirioCustomObject.currentPage = '.$page.';
                      sirioCustomObject.locale = "'.$locale.'";
@@ -485,12 +489,20 @@ class Sirio extends Module
 			if ($products_count % $limit > 0) {
 				$pages += 1;
 			}
+			if($page == $pages && $products_count % $limit > 0){
+				$products_count_page = $products_count % $limit;
+			}
+			else{
+				$products_count_page = $limit;
+			}
+			
 		
 			$snippet = '<script type="text/javascript">
                      //<![CDATA[
                      [[SCRIPT]]
                      sirioCustomObject.pageType = "search";
-                     sirioCustomObject.numProducts = ' . $products_count . ';
+                     sirioCustomObject.numProducts = ' . $products_count_page . ';
+                     sirioCustomObject.query = "' . $params["expr"] . '";
                      sirioCustomObject.locale = "' . $locale . '";
                      sirioCustomObject.pages = ' . $pages . ';
 					 sirioCustomObject.currentPage = ' . $page . ';
