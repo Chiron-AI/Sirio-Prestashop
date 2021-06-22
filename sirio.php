@@ -238,8 +238,19 @@ class Sirio extends Module
         }
 
         global $cookie;
-        $presenter = new CartPresenter($this->context);
-        $presented_cart = $presenter->present($this->context->cart, $shouldSeparateGifts = true);
+        if (!$this->context->cart->id) {
+            if (Context::getContext()->cookie->id_guest) {
+                $guest = new Guest(Context::getContext()->cookie->id_guest);
+                $this->context->cart->mobile_theme = $guest->mobile_theme;
+            }
+            $this->context->cart->add();
+            if ($this->context->cart->id) {
+                $this->context->cookie->id_cart = (int)$this->context->cart->id;
+            }
+        }
+        print_r($this->context->cart);
+        /*$presenter = new CartPresenter($this->context);
+        $presented_cart = $presenter->present($this->context->cart, $shouldSeparateGifts = true);*/
         $objCart = new Cart($this->context->cart->id, (int)$cookie->id_lang);
         $total = $objCart->getOrderTotal(true, Cart::BOTH);
         $shipping = $objCart->getPackageShippingCost();
@@ -254,7 +265,6 @@ class Sirio extends Module
         $total_discounts = $objCart->getOrderTotal(true, Cart::ONLY_DISCOUNTS);
         //TODO debug
         $discount = $total_discounts;
-
         /*
                 quando questa funzione viene chiamata:
                 metto in cart_new il carrello attuale
@@ -312,16 +322,28 @@ class Sirio extends Module
             return $this->appendCheckoutSuccessJS();
         }
     }
-    
-    private function cleanText($string){
-    	return  preg_replace('/\R/', '',
-				str_replace("<br/>","",
-				addslashes(
-					str_replace("'\n''","",
-					str_replace("'\r''","",
-					str_replace("'\t''","",
-					trim(array_pop($string))))))));
-	}
+
+    private function cleanTextProduct($string){
+        return  preg_replace('/\R/', '',
+            str_replace("<br/>","",
+                addslashes(
+                    str_replace("'\n''","",
+                        str_replace("'\r''","",
+                            str_replace("'\t''","",
+                                strip_tags(
+                                    trim(array_pop($string)))))))));
+    }
+    private function cleanTextCategory($string){
+        return  preg_replace('/\R/', '',
+            str_replace("<br/>","",
+                addslashes(
+                    str_replace("'\n''","",
+                        str_replace("'\r''","",
+                            str_replace("'\t''","",
+                                strip_tags(
+                                    trim(($string)))))))));
+    }
+
 
     private function appendHomeJS() {
         global $cookie;
@@ -351,13 +373,11 @@ class Sirio extends Module
         $images = Product::getCover($current_product->id);
         $image_url = $this->context->link->getImageLink(array_pop($current_product->link_rewrite), $images['id_image']);
         $product_selected = $current_product->reference?$current_product->reference:$current_product->ean13;
-        $description='EMPTY';
-        if($current_product->description[1] != ''){
-            $description = $current_product->description;
-        }elseif ($current_product->description_short != ''){
+        $description = $current_product->description;
+        if ($current_product->description_short != ''){
             $description = $current_product->description_short;
         }
-        
+
         return '<script type="text/javascript">
                      //<![CDATA[
                      '.$this->script.'
@@ -368,7 +388,7 @@ class Sirio extends Module
                         "sku:": "'.$product_selected.'",
                         "name":"'.array_pop($current_product->name).'",
                         "image":"'.$image_url.'",
-                        "description":"'.$this->cleanText($description).'",
+                        "description":"'.$this->cleanTextProduct($description).'",
                         "price":"'.Product::getPriceStatic((int) $current_product->id, true, null, 2, null, false, false).'",
                         "special_price":"'.Product::getPriceStatic((int) $current_product->id, true, null, 2, null, false, true).'"
                      //]]>
@@ -416,7 +436,7 @@ class Sirio extends Module
         return '<script type="text/javascript">
                      //<![CDATA[
                      '.$this->script.'
-                     sirioCustomObject.categoryDetails = {"name":"'.$current_category->name.'","image":"'.$this->context->link->getCategoryLink($current_category).'","description":"'.$this->cleanText($current_category->description).'"};
+                     sirioCustomObject.categoryDetails = {"name":"'.$current_category->name.'","image":"'.$this->context->link->getCategoryLink($current_category).'","description":"'.$this->cleanTextCategory($current_category->description).'"};
                      sirioCustomObject.pageType = "category";
                      sirioCustomObject.numProducts = '.$products_count_page.';
                      sirioCustomObject.pages = '.$pages.';
