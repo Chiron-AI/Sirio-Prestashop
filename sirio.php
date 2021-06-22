@@ -400,7 +400,7 @@ class Sirio extends Module
     }
 	
     # DEPRECATED
-    private function appendProductCategoryJS() {
+    /*private function appendProductCategoryJS() {
         global $cookie;
         $locale = Language::getIsoById( (int)$cookie->id_lang );
         $id_category = (int) Tools::getValue('id_category');
@@ -450,7 +450,7 @@ class Sirio extends Module
                      sirioCustomObject.currency = "'.$currency_code.'";
                      //]]>
                  </script>';
-    }
+    }*/
 
   	private function populateProductListingJS($params) {
 		global $cookie;
