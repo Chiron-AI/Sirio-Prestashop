@@ -2,7 +2,7 @@
 <module>
     <name>sirio</name>
     <displayName><![CDATA[Sirio]]></displayName>
-    <version><![CDATA[0.1.1]]></version>
+    <version><![CDATA[0.1.0]]></version>
     <description><![CDATA[Sirio is an advanced monitoring system ideal for E-Commerce, with plans that can be adapted according to the number of visitors to the site. Sirio receives a large amount of data in real-time and analyzes customers' behavior within the website, tracing all the interactions to find any possible anomaly that it might encounter in the funnel.]]></description>
     <author><![CDATA[Chiron]]></author>
     <tab><![CDATA[analytics_stats]]></tab>

@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <module>
-	<name>sirio</name>
-	<displayName><![CDATA[Sirio]]></displayName>
-	<version><![CDATA[0.1.0]]></version>
-	<description><![CDATA[Sirio is an advanced monitoring system ideal for E-Commerce, with plans that can be adapted according to the number of visitors to the site. Sirio receives a large amount of data in real-time and analyzes customers&#039; behavior within the website, tracing all the interactions to find any possible anomaly that it might encounter in the funnel.]]></description>
-	<author><![CDATA[Chiron]]></author>
-	<tab><![CDATA[analytics_stats]]></tab>
-	<is_configurable>1</is_configurable>
-	<need_instance>1</need_instance>
+    <name>sirio</name>
+    <displayName><![CDATA[Sirio]]></displayName>
+    <version><![CDATA[0.1.0]]></version>
+    <description><![CDATA[Sirio è un sistema di monitoraggio avanzato ideale per gli E-Commerce, con piani adattabili a seconda del numero di visitatori al sito. Sirio accoglie una grande mole di dati in real time e analizza il comportamento degli utenti all’interno del sito web, tracciandone tutte le interazioni al fine di riscontrare ogni possibile anomalia che potrebbe incontrare nel funnel.]]></description>
+    <author><![CDATA[Chiron]]></author>
+    <tab><![CDATA[analytics_stats]]></tab>
+    <confirmUninstall><![CDATA[Sei sicuro di voler eliminare questi dettagli?]]></confirmUninstall>
+    <is_configurable>0</is_configurable>
+    <need_instance>1</need_instance>
 	<limited_countries></limited_countries>
 </module>
