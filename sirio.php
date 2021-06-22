@@ -304,7 +304,7 @@ class Sirio extends Module
         }
 
         $this->script = $this->getHeaders();
-        
+
         if($this->context->controller->php_self == 'index' ) {
             return $this->appendHomeJS();
         }
@@ -332,7 +332,8 @@ class Sirio extends Module
                     str_replace("'\n''","",
                         str_replace("'\r''","",
                             str_replace("'\t''","",
-                                trim(array_pop($string))))))));
+                                strip_tags(
+                                    trim(array_pop($string)))))))));
     }
     private function cleanTextCategory($string){
         return  preg_replace('/\R/', '',
@@ -341,7 +342,8 @@ class Sirio extends Module
                     str_replace("'\n''","",
                         str_replace("'\r''","",
                             str_replace("'\t''","",
-                                trim(($string))))))));
+                                strip_tags(
+                                    trim(($string)))))))));
     }
 
 
@@ -373,13 +375,11 @@ class Sirio extends Module
         $images = Product::getCover($current_product->id);
         $image_url = $this->context->link->getImageLink(array_pop($current_product->link_rewrite), $images['id_image']);
         $product_selected = $current_product->reference?$current_product->reference:$current_product->ean13;
-        $description='EMPTY';
-        if($current_product->description[1] != ''){
-            $description = $current_product->description;
-        }elseif ($current_product->description_short != ''){
+        $description = $current_product->description;
+        if ($current_product->description_short != ''){
             $description = $current_product->description_short;
         }
-        
+
         return '<script type="text/javascript">
                      //<![CDATA[
                      '.$this->script.'
@@ -396,7 +396,7 @@ class Sirio extends Module
                      //]]>
                  </script>';
     }
-    
+
     private function appendProductCategoryJS() {
         global $cookie;
         $locale = Language::getIsoById( (int)$cookie->id_lang );
@@ -445,48 +445,8 @@ class Sirio extends Module
                  </script>';
     }
 
-    protected function getDefaultProductSearchProvider()
-    {
-        return new SearchProductSearchProvider(
-            $this->getTranslator()
-        );
-    }
+    private function populateProductSearchJS($params) {
 
-    private function getProductSearchProviderFromModules($query)
-    {
-        $providers = Hook::exec(
-            'productSearchProvider',
-            array('query' => $query),
-            null,
-            true
-        );
-
-        if (!is_array($providers)) {
-            $providers = array();
-        }
-
-        foreach ($providers as $provider) {
-            if ($provider instanceof ProductSearchProviderInterface) {
-                return $provider;
-            }
-        }
-    }
-
-    protected function getProductSearchContext()
-    {
-        return (new ProductSearchContext())
-            ->setIdShop($this->context->shop->id)
-            ->setIdLang($this->context->language->id)
-            ->setIdCurrency($this->context->currency->id)
-            ->setIdCustomer(
-                $this->context->customer ?
-                    $this->context->customer->id :
-                    null
-            );
-    }
-	
-	private function populateProductSearchJS($params) {
-				
     	if($params['total']) {
 			$products_count = $params['total'];
 			$cookie = $params['cookie'];
@@ -507,7 +467,7 @@ class Sirio extends Module
 			if ($products_count % $limit > 0) {
 				$pages += 1;
 			}
-		
+
 			$snippet = '<script type="text/javascript">
                      //<![CDATA[
                      [[SCRIPT]]
@@ -529,7 +489,7 @@ class Sirio extends Module
 			$snippet = $_SESSION['snippet'];
 			unset($_SESSION['snippet']);
 			$snippet = str_replace("[[SCRIPT]]",$this->script, $snippet);
-			
+
 			return $snippet;
 		}
     }
