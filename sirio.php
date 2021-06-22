@@ -50,13 +50,23 @@ class Sirio extends Module
 
     public function install()
     {
-        return parent::install() &&
-            $this->setDefaultValues() &&
-            $this->registerHook('actionFrontControllerSetMedia') &&
-            $this->registerHook('displayFooter') &&
-            $this->registerHook('actionCartSave') &&
-            $this->registerHook('actionSearch');
+        if (_PS_VERSION_ < '1.7') {
+            return parent::install()
+                && $this->setDefaultValues() &&
+                $this->registerHook('actionFrontControllerSetMedia') &&
+                $this->registerHook('displayFooter') &&
+                $this->registerHook('actionCartSave') &&
+                $this->registerHook('actionSearch');
 
+        }
+        else{
+            return parent::install() &&
+                $this->setDefaultValues() &&
+                $this->registerHook('actionFrontControllerSetMedia') &&
+                $this->registerHook('displayFooter') &&
+                $this->registerHook('actionCartSave') &&
+                $this->registerHook('actionProductSearchAfter');
+        }
     }
 
     public function uninstall()
@@ -218,6 +228,16 @@ class Sirio extends Module
             $this->context->controller->registerJavascript('remote-sirio', 'https://api.sirio.chiron.ai/api/v1/profiling', ['server' => 'remote', 'position' => 'top', 'priority' => 1]);
         }
     }
+
+    ## used for PS 1.7
+    public function hookActionProductSearchAfter($params) {
+        if(Configuration::get('SIRIO_MODULE_ENABLE')==0){
+            return;
+        }
+        return $this->populateProductSearchJS($params);
+    }
+
+    ## used for PS 1.6
     public function hookActionSearch($params) {
         if(Configuration::get('SIRIO_MODULE_ENABLE')==0){
             return;
@@ -225,6 +245,7 @@ class Sirio extends Module
         return $this->populateProductSearchJS($params);
 
     }
+
     public function hookActionCartSave() {
         if(Configuration::get('SIRIO_MODULE_ENABLE')==0){
             return;
@@ -440,100 +461,74 @@ class Sirio extends Module
                  </script>';
     }
 
-    protected function getDefaultProductSearchProvider()
-    {
-        return new SearchProductSearchProvider(
-            $this->getTranslator()
-        );
-    }
+  	private function populateProductSearchJS($params) {
 
-    private function getProductSearchProviderFromModules($query)
-    {
-        $providers = Hook::exec(
-            'productSearchProvider',
-            array('query' => $query),
-            null,
-            true
-        );
+       if($params['total']) {
 
-        if (!is_array($providers)) {
-            $providers = array();
-        }
-
-        foreach ($providers as $provider) {
-            if ($provider instanceof ProductSearchProviderInterface) {
-                return $provider;
+            $products_count = $params['total'];
+            $cookie = $params['cookie'];
+            if (_PS_VERSION_ < '1.7') {
+                $page = Tools::getValue('page') ? (int)Tools::getValue('page') : 1;
+              }
+            else{
+                $page = Tools::getValue('p') ? (int)Tools::getValue('p') : 1;
             }
+
+            $currency = new CurrencyCore($cookie->id_currency);
+            $currency_code = $currency->iso_code;
+            $locale = Language::getIsoById((int)$cookie->id_lang);
+
+            $limit = (int)Tools::getValue('resultsPerPage');
+            if ($limit <= 0) {
+                $limit = Configuration::get('PS_PRODUCTS_PER_PAGE');
+            }
+            $pages = (int)($products_count / $limit);
+            if ($products_count % $limit > 0) {
+                $pages += 1;
+            }
+            if ($page == $pages && $products_count % $limit > 0) {
+                $products_count_page = $products_count % $limit;
+            } else {
+                $products_count_page = $limit;
+            }
+
+
+            $snippet = '<script type="text/javascript">
+                 //<![CDATA[
+                 [[SCRIPT]]
+                 sirioCustomObject.pageType = "search";
+                 sirioCustomObject.numProducts = ' . $products_count_page . ';
+                 sirioCustomObject.query = "' . $params["expr"] . '";
+                 sirioCustomObject.locale = "' . $locale . '";
+                 sirioCustomObject.pages = ' . $pages . ';
+                 sirioCustomObject.currentPage = ' . $page . ';
+                 sirioCustomObject.currency = "' . $currency_code . '"
+                 //]]>
+             </script>';
+
+           if (_PS_VERSION_ < '1.7') {
+               $_SESSION['snippet'] = $snippet;
+           }
+           else{
+               $this->context->cookie->snippet = $snippet;
+           }
+
         }
-    }
 
-    protected function getProductSearchContext()
-    {
-        return (new ProductSearchContext())
-            ->setIdShop($this->context->shop->id)
-            ->setIdLang($this->context->language->id)
-            ->setIdCurrency($this->context->currency->id)
-            ->setIdCustomer(
-                $this->context->customer ?
-                    $this->context->customer->id :
-                    null
-            );
-    }
-
-	private function populateProductSearchJS($params) {
-
-    	if($params['total']) {
-			$products_count = $params['total'];
-			$cookie = $params['cookie'];
-			$currency = new CurrencyCore($cookie->id_currency);
-			$currency_code = $currency->iso_code;
-			$locale = Language::getIsoById((int)$cookie->id_lang);
-			if (_PS_VERSION_ < '1.7') {
-				$page = Tools::getValue('p') ? (int)Tools::getValue('p') : 1;
-			}
-			else{
-				$page = Tools::getValue('page') ? (int)Tools::getValue('page') : 1;
-			}
-			$limit = (int)Tools::getValue('resultsPerPage');
-			if ($limit <= 0) {
-				$limit = Configuration::get('PS_PRODUCTS_PER_PAGE');
-			}
-			$pages = (int)($products_count / $limit);
-			if ($products_count % $limit > 0) {
-				$pages += 1;
-			}
-			if($page == $pages && $products_count % $limit > 0){
-				$products_count_page = $products_count % $limit;
-			}
-			else{
-				$products_count_page = $limit;
-			}
-
-
-			$snippet = '<script type="text/javascript">
-                     //<![CDATA[
-                     [[SCRIPT]]
-                     sirioCustomObject.pageType = "search";
-                     sirioCustomObject.numProducts = ' . $products_count_page . ';
-                     sirioCustomObject.query = "' . $params["expr"] . '";
-                     sirioCustomObject.locale = "' . $locale . '";
-                     sirioCustomObject.pages = ' . $pages . ';
-					 sirioCustomObject.currentPage = ' . $page . ';
-					 sirioCustomObject.currency = "' . $currency_code . '"
-                     //]]>
-                 </script>';
-			//$this->context->cookie->snippet = $snippet;
-			$_SESSION['snippet'] = $snippet;
-		}
 	}
 
     private function appendProductSearchJS() {
-		if(isset($_SESSION['snippet'])) {
-			$snippet = $_SESSION['snippet'];
-			unset($_SESSION['snippet']);
-			$snippet = str_replace("[[SCRIPT]]",$this->script, $snippet);
 
-			return $snippet;
+        if (_PS_VERSION_ < '1.7' && isset($_SESSION['snippet'])) {
+            $snippet = $_SESSION['snippet'];
+            unset($_SESSION['snippet']);
+        }
+        else if(_PS_VERSION_ >= '1.7' && isset($this->context->cookie->snippet)){
+            $snippet = $this->context->cookie->snippet;
+            unset($this->context->cookie->snippet);
+        }
+		if(isset($snippet)) {
+            return str_replace("[[SCRIPT]]",$this->script, $snippet);
 		}
     }
 
