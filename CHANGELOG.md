@@ -20,3 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Compatibility of actionSearch hook on 1.6 PS versions
 - added two Hook for Search and Category functionality
 - added manage of Compatibility for cart implementation
+
+## [0.1.2] - 2021-06-23
+### Fixed
+- added manage of Compatibility for Function getHeaders for Nginx Web Server
