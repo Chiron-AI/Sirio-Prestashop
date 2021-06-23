@@ -38,7 +38,7 @@ class Sirio extends Module
     {
         $this->name = 'sirio';
         $this->tab = 'analytics_stats';
-        $this->version = '0.1.0';
+        $this->version = '0.1.1';
         $this->author = 'Chiron';
 
         parent::__construct();
