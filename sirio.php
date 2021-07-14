@@ -66,14 +66,14 @@ class Sirio extends Module
     public function install()
     {
         if (_PS_VERSION_ < '1.7') {
-            return parent::install()
-                && $this->setDefaultValues() &&
+            return parent::install() &&
+                $this->setDefaultValues() &&
                 $this->registerHook('actionFrontControllerSetMedia') &&
                 $this->registerHook('displayFooter') &&
                 $this->registerHook('actionCartSave') &&
                 $this->registerHook('actionSearch') &&
-				$this->registerHook('actionProductListModifier');
-
+                $this->registerHook('actionProductListModifier') &&
+                $this->registerHook('header');
         }
         else{
             return parent::install() &&
@@ -210,7 +210,7 @@ class Sirio extends Module
             'request'=>array(
                 'Accept-Encoding'=>$header_request['Accept-Encoding'],
                 'Accept-Language'=>$header_request['Accept-Language'],
-                'Cookie'=>$header_request['Cookie']
+                'Cookie'=> isset($header_request['Cookie']) ? $header_request['Cookie'] : null,
             ),
             'response'=>array(
                 $header_response_filtered,
@@ -233,13 +233,14 @@ class Sirio extends Module
         return $retriever->getImage($object, $id_image);
     }
 
+
     public function hookActionFrontControllerSetMedia()
     {
         if (Configuration::get('SIRIO_MODULE_ENABLE') == 0) {
             return;
         }
         if (_PS_VERSION_ < '1.7') {
-            $this->context->controller->addJS('https://api.sirio.chiron.ai/api/v1/profiling');
+            //$this->context->controller->addJS('https://api.sirio.chiron.ai/api/v1/profiling');
         }else{
             $this->context->controller->registerJavascript('remote-sirio', 'https://api.sirio.chiron.ai/api/v1/profiling', ['server' => 'remote', 'position' => 'top', 'priority' => 1]);
         }
@@ -252,15 +253,15 @@ class Sirio extends Module
         }
         return $this->populateProductListingJS($params);
     }
-	
-	## used for PS 1.6 - CATEGORY
-	public function hookActionProductListModifier($params) {
-    	if(Configuration::get('SIRIO_MODULE_ENABLE')==0){
-			return;
-		}
-		return $this->populateProductListingJS($params);
-		
-	}
+
+    ## used for PS 1.6 - CATEGORY
+    public function hookActionProductListModifier($params) {
+        if(Configuration::get('SIRIO_MODULE_ENABLE')==0){
+            return;
+        }
+        return $this->populateProductListingJS($params);
+
+    }
 
     ## used for PS 1.6 - SEARCH
     public function hookActionSearch($params) {
@@ -281,7 +282,6 @@ class Sirio extends Module
         if(Configuration::get('SIRIO_MODULE_ENABLE')==0){
             return;
         }
-
         $this->script = $this->getHeaders();
 
         if($this->context->controller->php_self == 'index' ) {
@@ -302,6 +302,12 @@ class Sirio extends Module
         else if ($this->context->controller->php_self == 'order-confirmation') {
             return $this->appendCheckoutSuccessJS();
         }
+    }
+    public function hookheader()
+    {
+        // Adds your's JavaScript from a module's directory
+        return '<script type="text/javascript" src="https://api.sirio.chiron.ai/api/v1/profiling"></script>';
+
     }
 
     /**
@@ -369,7 +375,7 @@ class Sirio extends Module
         setcookie('cart_sirio', base64_encode($cart_full), time() + (86400 * 30), "/");
     }
 
-    
+
 
     private function appendHomeJS() {
         global $cookie;
@@ -399,6 +405,7 @@ class Sirio extends Module
         $images = Product::getCover($current_product->id);
         $image_url = $this->context->link->getImageLink(array_pop($current_product->link_rewrite), $images['id_image']);
         $product_selected = $current_product->reference?$current_product->reference:$current_product->ean13;
+
         $description = $current_product->description;
         if ($current_product->description_short != ''){
             $description = $current_product->description_short;
@@ -421,7 +428,7 @@ class Sirio extends Module
                      //]]>
                  </script>';
     }
-	
+
     # DEPRECATED
     /*private function appendProductCategoryJS() {
         global $cookie;
@@ -475,21 +482,21 @@ class Sirio extends Module
                  </script>';
     }*/
 
-  	private function populateProductListingJS($params) {
-		global $cookie;
-    	if (_PS_VERSION_ < '1.7' && isset($params['nb_products'])) {
-    		$products_count = $params['nb_products'];
-		}
-		else{
-			$products_count = $params['total'];
-			$cookie = $params['cookie'];
-		}
-       
-    	
-       if($products_count) {
+    private function populateProductListingJS($params) {
+        global $cookie;
+        if (_PS_VERSION_ < '1.7' && isset($params['nb_products'])) {
+            $products_count = $params['nb_products'];
+        }
+        else{
+            $products_count = $params['total'];
+            $cookie = $params['cookie'];
+        }
+
+
+        if($products_count) {
 
             if (_PS_VERSION_ < '1.7') {
-                $page = Tools::getValue('page') ? (int)Tools::getValue('page') : 1;
+                $page = Tools::getValue('p') ? (int)Tools::getValue('p') : 1;
             }
             else{
                 $page = Tools::getValue('p') ? (int)Tools::getValue('p') : 1;
@@ -499,7 +506,7 @@ class Sirio extends Module
             $currency_code = $currency->iso_code;
             $locale = Language::getIsoById((int)$cookie->id_lang);
 
-            $limit = (int)Tools::getValue('resultsPerPage');
+            $limit = (int)Tools::getValue('n');
             if ($limit <= 0) {
                 $limit = Configuration::get('PS_PRODUCTS_PER_PAGE');
             }
@@ -512,21 +519,21 @@ class Sirio extends Module
             } else {
                 $products_count_page = $limit;
             }
-	
-		   if (isset($params["expr"])) {
-			   $page_type_script = 'sirioCustomObject.pageType = "search";
+
+            if (isset($params["expr"])) {
+                $page_type_script = 'sirioCustomObject.pageType = "search";
                  sirioCustomObject.query = "' . $params["expr"] . '";';
-		   }
-		   else if(Tools::getValue('id_category')){
-			   $id_category = (int) Tools::getValue('id_category');
-			   $current_category = new Category(
-				   $id_category,
-				   (int)$cookie->id_lang
-			   );
-			   $page_type_script = 'sirioCustomObject.categoryDetails = {"name":"'.$current_category->name.'","image":"'.$this->context->link->getCategoryLink($current_category).'","description":"'.$this->cleanTextCategory($current_category->description).'"};
+            }
+            else if(Tools::getValue('id_category')){
+                $id_category = (int) Tools::getValue('id_category');
+                $current_category = new Category(
+                    $id_category,
+                    (int)$cookie->id_lang
+                );
+                $page_type_script = 'sirioCustomObject.categoryDetails = {"name":"'.$current_category->name.'","image":"'.$this->context->link->getCategoryLink($current_category).'","description":"'.$this->cleanTextCategory($current_category->description).'"};
                      sirioCustomObject.pageType = "category";';
-           }
-			
+            }
+
             $snippet = '<script type="text/javascript">
                  //<![CDATA[
                  [[SCRIPT]]
@@ -539,17 +546,17 @@ class Sirio extends Module
                  //]]>
              </script>';
 
-           if (_PS_VERSION_ < '1.7') {
-               $_SESSION['snippet'] = $snippet;
-           }
-           else{
-               $this->context->cookie->snippet = $snippet;
-           }
-           
+            if (_PS_VERSION_ < '1.7') {
+                $_SESSION['snippet'] = $snippet;
+            }
+            else{
+                $this->context->cookie->snippet = $snippet;
+            }
+
 
         }
 
-	}
+    }
 
     private function appendProductListingJS() {
 
@@ -561,9 +568,9 @@ class Sirio extends Module
             $snippet = $this->context->cookie->snippet;
             unset($this->context->cookie->snippet);
         }
-		if(isset($snippet)) {
+        if(isset($snippet)) {
             return str_replace("[[SCRIPT]]",$this->script, $snippet);
-		}
+        }
     }
 
     private function appendCheckoutJS() {
@@ -600,27 +607,27 @@ class Sirio extends Module
                      //]]>
                  </script>';
     }
-	
-	
-	private function cleanTextProduct($string){
-		return  preg_replace('/\R/', '',
-			str_replace("<br/>","",
-				addslashes(
-					str_replace("'\n''","",
-						str_replace("'\r''","",
-							str_replace("'\t''","",
-								strip_tags(
-									trim(array_pop($string)))))))));
-	}
-	private function cleanTextCategory($string){
-		return  preg_replace('/\R/', '',
-			str_replace("<br/>","",
-				addslashes(
-					str_replace("'\n''","",
-						str_replace("'\r''","",
-							str_replace("'\t''","",
-								strip_tags(
-									trim(($string)))))))));
-	}
+
+
+    private function cleanTextProduct($string){
+        return  preg_replace('/\R/', '',
+            str_replace("<br/>","",
+                addslashes(
+                    str_replace("'\n''","",
+                        str_replace("'\r''","",
+                            str_replace("'\t''","",
+                                strip_tags(
+                                    trim(array_pop($string)))))))));
+    }
+    private function cleanTextCategory($string){
+        return  preg_replace('/\R/', '',
+            str_replace("<br/>","",
+                addslashes(
+                    str_replace("'\n''","",
+                        str_replace("'\r''","",
+                            str_replace("'\t''","",
+                                strip_tags(
+                                    trim(($string)))))))));
+    }
 
 }
