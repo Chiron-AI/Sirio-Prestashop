@@ -368,11 +368,11 @@ class Sirio extends Module
                 $subtotal+=$product["price"]*$product['qty'];
             }
         }
-        $cart_full = '{"cart_total":'.$total.',"cart_subtotal":'.$subtotal.',"shipping":'.$shipping.',"coupon_code":"'.$coupon.'","discount_amount":'.$discount.',"cart_products":'.json_encode($products).'}';
-        if(isset($_COOKIE['cart_sirio'])){
-            setcookie('cart_sirio', "", 1);
+        $cart_full = '{"sirio_cart":'.$total.',"cart_subtotal":'.$subtotal.',"shipping":'.$shipping.',"coupon_code":"'.$coupon.'","discount_amount":'.$discount.',"cart_products":'.json_encode($products).'}';
+        if(isset($_COOKIE['sirio_cart'])){
+            setcookie('sirio_cart', "", 1);
         }
-        setcookie('cart_sirio', base64_encode($cart_full), time() + (86400 * 30), "/");
+        setcookie('sirio_cart', base64_encode($cart_full), time() + (86400 * 30), "/");
     }
 
 
@@ -594,8 +594,8 @@ class Sirio extends Module
         $currency = new CurrencyCore($cookie->id_currency);
         $currency_code = $currency->iso_code;
 
-        if(isset($_COOKIE['cart_sirio'])){
-            unset($_COOKIE['cart_sirio']);
+        if(isset($_COOKIE['sirio_cart'])){
+            unset($_COOKIE['sirio_cart']);
         }
 
         return '<script type="text/javascript">
