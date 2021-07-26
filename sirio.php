@@ -14,6 +14,12 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+$GLOBALS['IP'] = isset($_SERVER['HTTP_CLIENT_IP'])
+    ? $_SERVER['HTTP_CLIENT_IP']
+    : isset($_SERVER['HTTP_X_FORWARDED_FOR'])
+        ? $_SERVER['HTTP_X_FORWARDED_FOR']
+        : $_SERVER['REMOTE_ADDR'];
+
 $autoloadPath = __DIR__ . '/vendor/autoload.php';
 if (file_exists($autoloadPath)) {
     require_once $autoloadPath;
@@ -388,6 +394,7 @@ class Sirio extends Module
                      sirioCustomObject.pageType = "home";
                      sirioCustomObject.locale = "'.$locale.'";
                      sirioCustomObject.currency = "'.$currency_code.'";
+                     sirioCustomObject.ip = "'.$GLOBALS['IP'].'";
                      //]]>
                  </script>';
     }
@@ -417,6 +424,7 @@ class Sirio extends Module
                      sirioCustomObject.pageType = "product";
                      sirioCustomObject.locale = "'.$locale.'";
                      sirioCustomObject.currency = "'.$currency_code.'";
+                     sirioCustomObject.ip = "'.$GLOBALS['IP'].'";
                      sirioCustomObject.productDetails = {
                         "sku:": "' . $product_selected . '",
                         "name":"' . array_pop($current_product->name) . '",
@@ -543,6 +551,7 @@ class Sirio extends Module
                  sirioCustomObject.pages = ' . $pages . ';
                  sirioCustomObject.currentPage = ' . $page . ';
                  sirioCustomObject.currency = "' . $currency_code . '"
+                 sirioCustomObject.ip = "'.$GLOBALS['IP'].'";
                  //]]>
              </script>';
 
@@ -584,6 +593,7 @@ class Sirio extends Module
                      sirioCustomObject.pageType = "checkout";
                      sirioCustomObject.locale = "'.$iso_code.'";
                      sirioCustomObject.currency = "'.$currency_code.'";
+                     sirioCustomObject.ip = "'.$GLOBALS['IP'].'";
                      //]]>
                  </script>';
     }
@@ -604,6 +614,7 @@ class Sirio extends Module
                      sirioCustomObject.pageType = "checkout_success";
                      sirioCustomObject.locale = "'.$locale.'";
                      sirioCustomObject.currency = "'.$currency_code.'";
+                     sirioCustomObject.ip = "'.$GLOBALS['IP'].'";
                      //]]>
                  </script>';
     }
