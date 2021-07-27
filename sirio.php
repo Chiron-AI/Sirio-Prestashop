@@ -14,11 +14,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-$GLOBALS['IP'] = isset($_SERVER['HTTP_CLIENT_IP'])
-    ? $_SERVER['HTTP_CLIENT_IP']
-    : isset($_SERVER['HTTP_X_FORWARDED_FOR'])
-        ? $_SERVER['HTTP_X_FORWARDED_FOR']
-        : $_SERVER['REMOTE_ADDR'];
+//cancellare locale e currency
 
 $autoloadPath = __DIR__ . '/vendor/autoload.php';
 if (file_exists($autoloadPath)) {
@@ -66,6 +62,13 @@ class Sirio extends Module
         $this->description = $this->l('Sirio is an advanced monitoring system ideal for E-Commerce, with plans that can be adapted according to the number of visitors to the site. Sirio receives a large amount of data in real-time and analyzes customers\' behavior within the website, tracing all the interactions to find any possible anomaly that it might encounter in the funnel.');
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
         $this->module_key = '1d1be07cf291473029caea0c12939961';
+
+        $this->script = 'var sirioCustomObject = {};';
+        $this->getHeaders();
+        $this->getIpAddress();
+        $this->getCurrency();
+        $this->getLocale();
+
     }
 
 
@@ -193,6 +196,27 @@ class Sirio extends Module
         return $this->moduleContainer;
     }
 
+    protected function getIpAddress(){
+        $ip = isset($_SERVER['HTTP_CLIENT_IP'])
+            ? $_SERVER['HTTP_CLIENT_IP']
+            : isset($_SERVER['HTTP_X_FORWARDED_FOR'])
+                ? $_SERVER['HTTP_X_FORWARDED_FOR']
+                : $_SERVER['REMOTE_ADDR'];
+
+        $this->script.='sirioCustomObject.ip = \''.$ip.'\';';
+    }
+    protected function getCurrency(){
+        global $cookie;
+        $currency = new CurrencyCore($cookie->id_currency);
+        $currency_code = $currency->iso_code;
+        $this->script.='sirioCustomObject.currency = \''.$currency_code.'\';';
+    }
+    protected function getLocale(){
+        global $cookie;
+        $locale = Language::getIsoById( (int)$cookie->id_lang );
+        $this->script.='sirioCustomObject.locale = \''.$locale.'\';';
+    }
+
     protected function getHeaders(){
         $header_request = getallheaders();
         $header_response = headers_list();
@@ -223,11 +247,9 @@ class Sirio extends Module
                 'status_code'=>$header_response_status_code
             )
         );
-
-        $script = 'var sirioCustomObject = {};
-	 				 sirioCustomObject.headers = '.json_encode($headers).';';
-
-        return $script;
+        print_r($headers);
+        print_r(json_encode($headers));
+        $this->script.='sirioCustomObject.headers = '.json_encode($headers).';';
     }
 
     protected function getImage($object, $id_image)
@@ -288,7 +310,6 @@ class Sirio extends Module
         if(Configuration::get('SIRIO_MODULE_ENABLE')==0){
             return;
         }
-        $this->script = $this->getHeaders();
 
         if($this->context->controller->php_self == 'index' ) {
             return $this->appendHomeJS();
@@ -307,6 +328,9 @@ class Sirio extends Module
         }
         else if ($this->context->controller->php_self == 'order-confirmation') {
             return $this->appendCheckoutSuccessJS();
+        }
+        else{
+            return $this->appendDefaultJS();
         }
     }
     public function hookheader()
@@ -374,7 +398,7 @@ class Sirio extends Module
                 $subtotal+=$product["price"]*$product['qty'];
             }
         }
-        $cart_full = '{"sirio_cart":'.$total.',"cart_subtotal":'.$subtotal.',"shipping":'.$shipping.',"coupon_code":"'.$coupon.'","discount_amount":'.$discount.',"cart_products":'.json_encode($products).'}';
+        $cart_full = '{"cart_total":'.$total.',"cart_subtotal":'.$subtotal.',"shipping":'.$shipping.',"coupon_code":"'.$coupon.'","discount_amount":'.$discount.',"cart_products":'.json_encode($products).'}';
         if(isset($_COOKIE['sirio_cart'])){
             setcookie('sirio_cart', "", 1);
         }
@@ -384,31 +408,21 @@ class Sirio extends Module
 
 
     private function appendHomeJS() {
-        global $cookie;
-        $locale = Language::getIsoById( (int)$cookie->id_lang );
-        $currency = new CurrencyCore($cookie->id_currency);
-        $currency_code = $currency->iso_code;
         return '<script type="text/javascript">
                      //<![CDATA[
                      '.$this->script.'
                      sirioCustomObject.pageType = "home";
-                     sirioCustomObject.locale = "'.$locale.'";
-                     sirioCustomObject.currency = "'.$currency_code.'";
-                     sirioCustomObject.ip = "'.$GLOBALS['IP'].'";
                      //]]>
                  </script>';
     }
 
     private function appendProductJS() {
         global $cookie;
-        $locale = Language::getIsoById( (int)$cookie->id_lang );
         $id_product = (int) Tools::getValue('id_product');
         $current_product = new Product(
             $id_product,
             (int)$cookie->id_lang
         );
-        $currency = new CurrencyCore($cookie->id_currency);
-        $currency_code = $currency->iso_code;
         $images = Product::getCover($current_product->id);
         $image_url = $this->context->link->getImageLink(array_pop($current_product->link_rewrite), $images['id_image']);
         $product_selected = $current_product->reference?$current_product->reference:$current_product->ean13;
@@ -422,9 +436,6 @@ class Sirio extends Module
                      //<![CDATA[
                      '.$this->script.'
                      sirioCustomObject.pageType = "product";
-                     sirioCustomObject.locale = "'.$locale.'";
-                     sirioCustomObject.currency = "'.$currency_code.'";
-                     sirioCustomObject.ip = "'.$GLOBALS['IP'].'";
                      sirioCustomObject.productDetails = {
                         "sku:": "' . $product_selected . '",
                         "name":"' . array_pop($current_product->name) . '",
@@ -509,11 +520,6 @@ class Sirio extends Module
             else{
                 $page = Tools::getValue('p') ? (int)Tools::getValue('p') : 1;
             }
-
-            $currency = new CurrencyCore($cookie->id_currency);
-            $currency_code = $currency->iso_code;
-            $locale = Language::getIsoById((int)$cookie->id_lang);
-
             $limit = (int)Tools::getValue('n');
             if ($limit <= 0) {
                 $limit = Configuration::get('PS_PRODUCTS_PER_PAGE');
@@ -547,11 +553,8 @@ class Sirio extends Module
                  [[SCRIPT]]
                  '.$page_type_script.'
                  sirioCustomObject.numProducts = ' . $products_count_page . ';
-                 sirioCustomObject.locale = "' . $locale . '";
                  sirioCustomObject.pages = ' . $pages . ';
                  sirioCustomObject.currentPage = ' . $page . ';
-                 sirioCustomObject.currency = "' . $currency_code . '"
-                 sirioCustomObject.ip = "'.$GLOBALS['IP'].'";
                  //]]>
              </script>';
 
@@ -583,42 +586,33 @@ class Sirio extends Module
     }
 
     private function appendCheckoutJS() {
-        global $cookie;
-        $iso_code = Language::getIsoById( (int)$cookie->id_lang );
-        $currency = new CurrencyCore($cookie->id_currency);
-        $currency_code = $currency->iso_code;
         return '<script type="text/javascript">
                      //<![CDATA[
                      '.$this->script.'
                      sirioCustomObject.pageType = "checkout";
-                     sirioCustomObject.locale = "'.$iso_code.'";
-                     sirioCustomObject.currency = "'.$currency_code.'";
-                     sirioCustomObject.ip = "'.$GLOBALS['IP'].'";
                      //]]>
                  </script>';
     }
 
     private function appendCheckoutSuccessJS() {
-        global $cookie;
-        $locale = Language::getIsoById( (int)$cookie->id_lang );
-        $currency = new CurrencyCore($cookie->id_currency);
-        $currency_code = $currency->iso_code;
-
         if(isset($_COOKIE['sirio_cart'])){
             unset($_COOKIE['sirio_cart']);
         }
-
         return '<script type="text/javascript">
                      //<![CDATA[
                      '.$this->script.'
                      sirioCustomObject.pageType = "checkout_success";
-                     sirioCustomObject.locale = "'.$locale.'";
-                     sirioCustomObject.currency = "'.$currency_code.'";
-                     sirioCustomObject.ip = "'.$GLOBALS['IP'].'";
                      //]]>
                  </script>';
     }
 
+    private function appendDefaultJS() {
+        return '<script type="text/javascript">
+                     //<![CDATA[
+                     '.$this->script.'
+                     //]]>
+                 </script>';
+    }
 
     private function cleanTextProduct($string){
         return  preg_replace('/\R/', '',
