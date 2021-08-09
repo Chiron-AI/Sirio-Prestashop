@@ -256,8 +256,6 @@ class Sirio extends Module
                 'status_code'=>$header_response_status_code
             )
         );
-        print_r($headers);
-        print_r(json_encode($headers));
         $this->script.='sirioCustomObject.headers = '.json_encode($headers).';';
     }
 
