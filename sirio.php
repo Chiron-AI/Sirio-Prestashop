@@ -216,11 +216,20 @@ class Sirio extends Module
         $locale = Language::getIsoById( (int)$cookie->id_lang );
         $this->script.='sirioCustomObject.locale = \''.$locale.'\';';
     }
-
+    /**
+     * Gets headers of the page, if controller is initialized as 404, the value passed for
+     * status code is manually set as 404, otherwise is set as 200 via http_response_code()
+     * http_response_code() -> if nothing is passed return 200.
+     */
     protected function getHeaders(){
         $header_request = getallheaders();
         $header_response = headers_list();
-        $header_response_status_code = http_response_code();
+
+        if($this->context->controller->php_self == '404'){
+            $header_response_status_code = '404';
+        }else{
+            $header_response_status_code = http_response_code();
+        }
 
 
         $header_response_filtered = array();
