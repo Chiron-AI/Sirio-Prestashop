@@ -225,7 +225,7 @@ class Sirio extends Module
         $header_request = getallheaders();
         $header_response = headers_list();
 
-        if($this->context->controller->php_self == '404'){
+        if(isset($this->context->controller->page_name) && $this->context->controller->page_name == 'pagenotfound'){
             $header_response_status_code = '404';
         }else{
             $header_response_status_code = http_response_code();
