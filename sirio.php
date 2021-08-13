@@ -455,59 +455,6 @@ class Sirio extends Module
                  </script>';
     }
 
-    # DEPRECATED
-    /*private function appendProductCategoryJS() {
-        global $cookie;
-        $locale = Language::getIsoById( (int)$cookie->id_lang );
-        $id_category = (int) Tools::getValue('id_category');
-        if (_PS_VERSION_ < '1.7') {
-			$page = Tools::getValue('p') ? (int)Tools::getValue('p') : 1;
-		}
-		else{
-			$page = Tools::getValue('page') ? (int)Tools::getValue('page') : 1;
-		}
-        $current_category = new Category(
-            $id_category,
-            (int)$cookie->id_lang
-        );
-
-        $max_product_count = $current_category->getProducts(1, 1, 10000, null, null, true);
-        $limit = (int) Tools::getValue('resultsPerPage');
-        if ($limit <= 0) {
-            $limit = Configuration::get('PS_PRODUCTS_PER_PAGE');
-        }
-        $products_count = $limit;
-        $currency = new CurrencyCore($cookie->id_currency);
-        $currency_code = $currency->iso_code;
-
-        if($max_product_count % $limit > 0){
-            $pages = (int)($max_product_count / $limit) + 1 ;
-        }
-        else{
-            $pages = $max_product_count / $limit ;
-        }
-
-		if($page == $pages && $products_count % $limit > 0){
-			$products_count_page = $products_count % $limit;
-		}
-		else{
-			$products_count_page = $limit;
-		}
-
-        return '<script type="text/javascript">
-                     //<![CDATA[
-                     '.$this->script.'
-                     sirioCustomObject.categoryDetails = {"name":"'.$current_category->name.'","image":"'.$this->context->link->getCategoryLink($current_category).'","description":"'.$this->cleanTextCategory($current_category->description).'"};
-                     sirioCustomObject.pageType = "category";
-                     sirioCustomObject.numProducts = '.$products_count_page.';
-                     sirioCustomObject.pages = '.$pages.';
-                     sirioCustomObject.currentPage = '.$page.';
-                     sirioCustomObject.locale = "'.$locale.'";
-                     sirioCustomObject.currency = "'.$currency_code.'";
-                     //]]>
-                 </script>';
-    }*/
-
     private function populateProductListingJS($params) {
         global $cookie;
         if (_PS_VERSION_ < '1.7' && isset($params['nb_products'])) {
