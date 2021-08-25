@@ -337,7 +337,12 @@ class Sirio extends Module
             return $this->appendCheckoutSuccessJS();
         }
         else{
-            return $this->appendDefaultJS();
+            $actual_link = $_SERVER['REQUEST_URI'];
+            if (strpos($actual_link, 'module/paypal/submit') !== false) {
+                return $this->appendCheckoutSuccessJS();
+            }else{
+                return $this->appendDefaultJS();
+            }
         }
     }
     public function hookheader()
