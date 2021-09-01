@@ -453,8 +453,8 @@ class Sirio extends Module
                         "name":"' . array_pop($current_product->name) . '",
                         "image":"' . $image_url . '",
                         "description":"' . $this->cleanTextProduct($description) . '",
-                        "price":"' . Product::getPriceStatic((int)$current_product->id, true, null, 2, null, false, false) . '",
-                        "special_price":"' . Product::getPriceStatic((int)$current_product->id, true, null, 2, null, false, true) . '"
+                        "price":"' . number_format(Product::getPriceStatic((int)$current_product->id, true, null, 2, null, false, false),2) . '",
+                        "special_price":"' . number_format(Product::getPriceStatic((int)$current_product->id, true, null, 2, null, false, true),2) . '"
                         }
                      //]]>
                  </script>';
