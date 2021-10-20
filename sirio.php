@@ -449,7 +449,7 @@ class Sirio extends Module
                      '.$this->script.'
                      sirioCustomObject.pageType = "product";
                      sirioCustomObject.productDetails = {
-                        "sku:": "' . $product_selected . '",
+                        "sku": "' . $product_selected . '",
                         "name":"' . array_pop($current_product->name) . '",
                         "image":"' . $image_url . '",
                         "description":"' . $this->cleanTextProduct($description) . '",
@@ -523,7 +523,6 @@ class Sirio extends Module
             else{
                 $this->context->cookie->snippet = $snippet;
             }
-
 
         }
 
