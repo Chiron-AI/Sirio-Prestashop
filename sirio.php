@@ -399,7 +399,17 @@ class Sirio extends Module
         $products = array();
         if (isset($productsCart) && !empty($productsCart)) {
             foreach ($productsCart as $item) {
+                $optionsFormatted=[];
+                if (array_key_exists('attributes', $item)) {
+                    $options = explode(",", $item['attributes']);
+                    for ($i = 0; $i < count($options); $i++) {
+                        $newOptions = explode(":", $options[$i]);
+                        $optionsFormatted[$newOptions[0]] = $newOptions[1];
+                    }
+                }
                 $product = array(
+                    "item-id" => $item['id_product'],
+                    "options" => !empty($optionsFormatted)?$optionsFormatted:"",
                     "sku" => $item['reference']?$item['reference']:$item['ean13'],
                     "price" => number_format(Product::getPriceStatic((int) $item['id_product'], true, null, 2, null, false, true),2),
                     "qty" => round($item['quantity']),
