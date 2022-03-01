@@ -1,5 +1,5 @@
 {**
- * 2007-2020 PrestaShop SA and Contributors
+ * 2007-2022 PrestaShop SA and Contributors
  *
  * NOTICE OF LICENSE
  *
@@ -18,21 +18,10 @@
  * needs please refer to https://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2020 PrestaShop SA and Contributors
+ * @copyright 2007-2022 PrestaShop SA and Contributors
  * @license   https://opensource.org/licenses/AFL-3.0 Academic Free License 3.0 (AFL-3.0)
  * International Registered Trademark & Property of PrestaShop SA
  *}
-
-{**
-* Copyright (c) 2019 Nexi Payments S.p.A.
-*
-* @author      iPlusService S.r.l.
-* @copyright   Copyright (c) 2019 Nexi Payments S.p.A. (https://ecommerce.nexi.it)
-* @license     GNU General Public License v3.0
-* @category    Payment Module
-* @package     Nexi XPay
-* @version     5.0.0
-*}
 <div class="panel">
 <form class="form-horizontal" method="post">
 
